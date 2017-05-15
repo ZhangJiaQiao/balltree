@@ -1,1 +1,2 @@
-这是侨，琛，玮，沅，骏的数据库第三次实验。
+# BallTree
+  A kind of data structure that help do maximum inner-product search.
