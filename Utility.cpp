@@ -10,8 +10,8 @@ bool read_data(
 	int n,
 	int d,
 	float** &data,
-	const char* file_name)
-{
+	const char* file_name) {
+
 	FILE* fin = fopen(file_name, "r");
 	if (!fin) {
 		printf("%s doesn't exist!\n", file_name);
