@@ -92,7 +92,7 @@ AB MakeBallTreeSplit(float ** data, int* dataIndex, int size, int d) {
 int createLeftSet(int n, int d, float **data, int *dataIndex, int *leftSet, AB ab) {
 
 }
-
+//生成左子树的点集的索引
 int createRightSet(int d, float **data, int *leftSet, int *rightSet) {
 
 }
