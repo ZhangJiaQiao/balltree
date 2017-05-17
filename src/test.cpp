@@ -3,7 +3,7 @@
 #include "BallTree.h"
 #include "Utility.h"
 
-#define YAHOO
+#define MNIST
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
