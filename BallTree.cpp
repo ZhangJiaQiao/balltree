@@ -158,4 +158,3 @@ float* getMaxPoint(float* mean, float **data, int *dataIndex, int size, int d) {
 	}
 	return data[maxIndex];
 }
->>>>>>> 030243d7d465e50ec1594e75aa710da193b75b05

@@ -1,12 +1,6 @@
 #include <iostream>
-
-<<<<<<< HEAD
 #include "BallTree.h"
 #include "Utility.h"
-=======
-#include "BallTree.cpp"
-#include "Utility.cpp"
->>>>>>> 030243d7d465e50ec1594e75aa710da193b75b05
 
 #define YAHOO
 
@@ -25,13 +19,8 @@ int qn = 1000;
 int main() {
 	char data_path[L], query_path[L];
 	char index_path[L], output_path[L];
-<<<<<<< HEAD
 	float** data = nullptr;
 	float** query = nullptr;
-=======
-	float** data;
-	float** query;
->>>>>>> 030243d7d465e50ec1594e75aa710da193b75b05
 
 	sprintf(data_path, "%s/src/dataset.txt", dataset);
 	sprintf(query_path, "%s/src/query.txt", dataset);
@@ -70,8 +59,4 @@ int main() {
 	}
 
 	return 0;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 030243d7d465e50ec1594e75aa710da193b75b05

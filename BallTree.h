@@ -5,11 +5,8 @@
 
 class BallTree {
 public:
-<<<<<<< HEAD
-=======
 	treeNode* root;
 
->>>>>>> 030243d7d465e50ec1594e75aa710da193b75b05
 	BallTree();
 	~BallTree();
 
@@ -44,9 +41,6 @@ public:
 		int d,
 		float** data);
 };
-
-<<<<<<< HEAD
-=======
 
 class treeNode {
 public:
@@ -83,5 +77,4 @@ struct AB {
 	int asize;
 	int bsize;
 }
->>>>>>> 030243d7d465e50ec1594e75aa710da193b75b05
 #endif
