@@ -9,6 +9,7 @@ class BallTree {
 private:
     ballTreeNode *root;
     int dimension;
+    int numSlot;
 
     float *computeMean(int n, int d, float **data);
     float computeRadius(int n, int d, float **data);

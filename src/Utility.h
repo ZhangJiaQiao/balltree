@@ -2,10 +2,10 @@
 #define __UTILITY_H
 
 #define L 256
-#define numSlot 1024
 
 #include <vector>
 #include <fstream>
+#include <cmath>
 
 struct Rid {
     int pageid;
@@ -49,6 +49,6 @@ bool read_data(int n, int d, float** &data, const char* file_name);
 
 float **parseFloatArr(std::vector<float*> v);
 
-void storeNode(ballTreeNode *node, std::ofstream &output, int pageid, int slotid);
+void storeNode(ballTreeNode *node, std::ofstream &output, int pageid, int slotid, int numSlot, int d);
 
 #endif
