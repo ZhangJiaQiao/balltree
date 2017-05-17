@@ -11,7 +11,7 @@ private:
     int dimension;
 
     float *computeMean(int n, int d, float **data);
-    float computeRadius(int n, int d, float **data);
+    float computeRadius(int n, int d, float **data, float * mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
     void buildBall(ballTreeNode *&node, int n, int d, float **data);
