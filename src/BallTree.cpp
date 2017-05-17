@@ -92,3 +92,33 @@ void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data) {
     delete[] leftData_;
     delete[] rightData_;
 }
+
+float* BallTree::computeMean(int n, int d, float **data) {
+    float *mean = new float[d];
+
+    for (int i = 0; i < d; i++) {
+        float tempSum = 0;
+        for (int j = 0; j < n; j++) {
+            tempSum += data[j][i];
+        }
+        tempSum /= n;
+        mean[i] = tempSum;
+    }
+}
+
+float BallTree::computeRadius(int n, int d, float **data, float *mean) {
+    float max = 0;
+    for (int i = 0; i < n; i++) {
+        float radius = 0;
+        for (int j = 0; j < d; j++) {
+            radius += pow(fabs(mean[j] - data[index][j]), 2);
+        }
+
+        radius = sqrt(radius);
+        //得到根号值，即半径
+        if (max < radius) {
+            max = radius;
+        }
+    }
+    return max;
+}
