@@ -5,7 +5,7 @@
 
 class BallTree {
 public:
-	treeNode root;
+	treeNode* root;
 
 	BallTree();
 	~BallTree();
@@ -54,7 +54,9 @@ public:
 	treeNode *right;
 
 	treeNode();
-	~treeNode();
+	~treeNode(){
+		delete []mean;
+	}
 	treeNode(float* m, float r, int d) {
 		mean = new float [d];
 		for (int i = 0; i < d; i++) {
@@ -71,8 +73,9 @@ public:
 }
 
 struct AB {
-	float* A;
-	float* B;
-	int d;
+	int* AIndex;
+	int* BIndex;
+	int asize;
+	int bsize;
 }
 #endif
