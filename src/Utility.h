@@ -3,10 +3,6 @@
 
 #define L 256
 
-#include <vector>
-#include <fstream>
-#include <cmath>
-
 struct Rid {
     int pageid;
     int slotid;
@@ -30,25 +26,14 @@ struct ballTreeNode {
     Rid left_rid;
     Rid right_rid;
 
-    ballTreeNode() {
-        radius = 0;
-        mean = NULL;
-        rid = Rid();
-        left = right = NULL;
-    }
-    ballTreeNode(float r, float* m, int d) {
-        rid = Rid();
-        radius = r;
-        mean = new float[d];
-        memcpy(mean, m, d);
-        left = right = NULL;
-    }
+    ballTreeNode();
+    ballTreeNode(float r, float* m, int d);
 };
 
 bool read_data(int n, int d, float** &data, const char* file_name);
 
 float **parseFloatArr(std::vector<float*> v);
 
-void storeNode(ballTreeNode *node, std::ofstream &output, int pageid, int slotid, int numSlot, int d);
+void storeNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d);
 
 #endif

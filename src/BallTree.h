@@ -10,6 +10,7 @@ private:
     ballTreeNode *root;
     int dimension;
     int numSlot;
+    int pageid, slotid;
 
     float *computeMean(int n, int d, float **data);
     float computeRadius(int n, int d, float **data, float *mean);
@@ -17,7 +18,8 @@ private:
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
     void buildBall(ballTreeNode *&node, int n, int d, float **data);
 
-    void preorderStore(ballTreeNode *node, std::ofstream &output, int pageid, int slotid);
+    void preorderSetRid(ballTreeNode *node, ballTreeNode *father, bool isLeft);
+    void preorderStore(ballTreeNode *node, std::ofstream &output);
 public:
 	BallTree();
 	~BallTree();
@@ -38,5 +40,7 @@ public:
 
 	// optional
 	//bool buildQuadTree(int n, int d, float** data);
+
+    int getNumSlot() { return numSlot; }
 };
 #endif

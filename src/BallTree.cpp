@@ -1,10 +1,15 @@
+#include <cmath>
+#include <fstream>
+#include <vector>
+
 #include "BallTree.h"
-#include "Utility.h"
 
 BallTree::BallTree() {
     root = NULL;
     dimension = 0;
     numSlot = 0;
+    pageid = 0;
+    slotid = 0;
 }
 
 BallTree::~BallTree() {
@@ -12,9 +17,9 @@ BallTree::~BallTree() {
 }
 
 bool BallTree::buildTree(int n, int d, float **data) {
-    buildBall(root, n, d, data);
     dimension = d;
-    numSlot = floor(65536 / (3 * sizeof(Rid) + (d + 1) * sizeof(float) + 1));
+    numSlot = floor(65536 / (sizeof(int) * 7 + sizeof(float) * (d + 1)));
+    buildBall(root, n, d, data);
 
     if (root == NULL)
         return false;
@@ -27,15 +32,17 @@ bool BallTree::storeTree(const char *index_path) {
     if (!output)
         return false;
 
-    int curPage = 0, curSlot = 0;
-    preorderStore(root, output, curPage, curSlot);
+    pageid = slotid = 0;
+    preorderSetRid(root, NULL, true);
+    preorderStore(root, output);
+    output.close();
     return true;
 }
 
 float BallTree::computeDistance(float *x, float *y) {
     float squareSum = 0;
     for (int i = 0; i < dimension; i++)
-        squareSum += x[i] * x[i] - y[i] * y[i];
+        squareSum += (x[i] - y[i]) * (x[i] - y[i]);
     return sqrt(squareSum);
 }
 
@@ -57,14 +64,33 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
             B = data[i];
         }
     }
+    return true;
 }
 
-void BallTree::preorderStore(ballTreeNode *node, std::ofstream &output, int pageid, int slotid) {
+void BallTree::preorderSetRid(ballTreeNode *node, ballTreeNode *father, bool isLeft) {
     if (node == NULL)
         return;
-    storeNode(node, output, pageid, slotid, numSlot, dimension);
-    preorderStore(node->left, output, slotid == numSlot - 1 ? pageid + 1 : pageid, slotid == numSlot - 1 ? 0 : slotid + 1);
-    preorderStore(node->right, output, slotid == numSlot - 1 ? pageid + 1 : pageid, slotid == numSlot - 1 ? 0 : slotid + 1);
+    node->rid.pageid = slotid == numSlot - 1 ? pageid++ : pageid;
+    node->rid.slotid = slotid++;
+    if (slotid == numSlot - 1) {
+        node->rid.slotid = 0;
+    }
+    if (father != NULL) {
+        if (isLeft)
+            father->left_rid = node->rid;
+        else
+            father->right_rid = node->rid;
+    }
+    preorderSetRid(node->left, node, true);
+    preorderSetRid(node->right, node, false);
+}
+
+void BallTree::preorderStore(ballTreeNode *node, std::ofstream &output) {
+    if (node == NULL)
+        return;
+    storeNode(node, output, numSlot, dimension);
+    preorderStore(node->left, output);
+    preorderStore(node->right, output);
 }
 
 void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data) {
@@ -102,9 +128,9 @@ float* BallTree::computeMean(int n, int d, float **data) {
         for (int j = 0; j < n; j++) {
             tempSum += data[j][i];
         }
-        tempSum /= n;
-        mean[i] = tempSum;
+        mean[i] = tempSum / n;
     }
+    return mean;
 }
 
 float BallTree::computeRadius(int n, int d, float **data, float *mean) {

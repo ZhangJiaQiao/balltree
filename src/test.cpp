@@ -1,6 +1,10 @@
 #include <iostream>
 #include <cstdio>
 #include <cstring>
+#include <vector>
+#include <fstream>
+#include <cmath>
+#include <fstream>
 
 #include "Utility.h"
 #include "BallTree.h"
@@ -20,24 +24,31 @@ int qn = 1000;
 #endif
 
 int main() {
-    std::cout << "Hello World!\n";
-	//char data_path[L], query_path[L];
-	//char index_path[L], output_path[L];
-	//float** data = NULL;
-	//float** query = NULL;
+	char data_path[L], query_path[L];
+	char index_path[L], output_path[L];
+	float** data = NULL;
+	float** query = NULL;
 
-	//sprintf(data_path, "%s/src/dataset.txt", dataset);
-	//sprintf(query_path, "%s/src/query.txt", dataset);
-	//sprintf(index_path, "%s/index/sample.dat", dataset);
-	//sprintf(output_path, "%s/dst/answer.txt", dataset);
+	sprintf(data_path, "%s/src/dataset.txt", dataset);
+	sprintf(query_path, "%s/src/query.txt", dataset);
+	sprintf(index_path, "%s/index/sample.dat", dataset);
+	sprintf(output_path, "%s/dst/answer.txt", dataset);
 
-	//if (!read_data(n, d, data, data_path)) {
-	//	return 1;
-	//}
+	if (!read_data(n, d, data, data_path)) {
+		return 1;
+	}
 
-	//BallTree ball_tree1;
-	//ball_tree1.buildTree(n, d, data);
-	//ball_tree1.storeTree(index_path);
+	BallTree ball_tree1;
+	ball_tree1.buildTree(n, d, data);
+	ball_tree1.storeTree(index_path);
+
+    std::ifstream testData(index_path, std::ios::binary | std::ios::in);
+    
+    testData.seekg(ball_tree1.getNumSlot() + sizeof(int) * 7 + sizeof(float) * (d + 1));
+    float floatArr[51];
+    int intArr[7];
+    testData.read((char*)intArr, sizeof(int) * 7);
+    testData.read((char*)floatArr, sizeof(float) * (d + 1));
 
 	//if (!read_data(qn, d, query, query_path));
 	//FILE* fout = fopen(output_path, "w");

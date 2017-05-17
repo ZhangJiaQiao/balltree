@@ -1,10 +1,25 @@
 #include <cstdio>
 #include <cmath>
 #include <algorithm>
+#include <vector>
+#include <fstream>
 
 #include "Utility.h"
 
 using namespace std;
+
+ballTreeNode::ballTreeNode() {
+    radius = 0;
+    mean = NULL;
+    rid = Rid();
+    left = right = NULL;
+}
+ballTreeNode::ballTreeNode(float r, float* m, int d) {
+    rid = Rid();
+    radius = r;
+    mean = m;
+    left = right = NULL;
+}
 
 bool read_data(int n, int d, float** &data, const char* file_name) {
 	FILE* fin = fopen(file_name, "r");
@@ -37,16 +52,19 @@ float **parseFloatArr(std::vector<float*> v) {
     return data;
 }
 
-void storeNode(ballTreeNode *node, std::ofstream &output, int pageid, int slotid, int numSlot, int d) {
-    if (slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(pageid * 65536);
+void storeNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d) {
+    if (node->rid.slotid == 0) {    // bitMap needs to be inserted.
+        output.seekp(node->rid.pageid * 65536);
         bool *bitMap = new bool[numSlot];
-        bitMap[0] = 1;
-        memset(bitMap + 1, 0, numSlot - 1);
+        memset(bitMap, 0, numSlot);
         output.write((char*)bitMap, numSlot);
         delete[] bitMap;
     }
-    output.seekp(pageid * 65536 + slotid + numSlot);
+    output.seekp(node->rid.pageid * 65536 + node->rid.slotid);
+    bool a = true;
+    output.write((char*)&a, sizeof(bool));
+    
+    output.seekp(node->rid.pageid * 65536 + node->rid.slotid * (sizeof(int) * 7 + sizeof(float) * (d + 1)) + numSlot);
     float *floatArr = new float[d + 1];
     int *intArr = new int[7];
     intArr[0] = node->rid.pageid;
@@ -57,7 +75,8 @@ void storeNode(ballTreeNode *node, std::ofstream &output, int pageid, int slotid
     intArr[5] = node->right_rid.slotid;
     intArr[6] = d;
     floatArr[0] = node->radius;
-    memcpy(floatArr + 1, node->mean, d);
+    for (int i = 0; i < d; i++)
+        floatArr[i + 1] = node->mean[i];
     output.write((char*)intArr, 7 * sizeof(int));
     output.write((char*)floatArr, (d + 1) * sizeof(float));
     delete[] floatArr;
