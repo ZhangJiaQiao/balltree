@@ -2,7 +2,7 @@
 #include "Utility.h"
 
 BallTree::BallTree() {
-    root = nullptr;
+    root = NULL;
     dimension = 0;
     numSlot = 0;
 }
@@ -16,7 +16,7 @@ bool BallTree::buildTree(int n, int d, float **data) {
     dimension = d;
     numSlot = floor(65536 / (3 * sizeof(Rid) + (d + 1) * sizeof(float) + 1));
 
-    if (root == nullptr)
+    if (root == NULL)
         return false;
     return true;
 }
@@ -60,7 +60,7 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
 }
 
 void BallTree::preorderStore(ballTreeNode *node, std::ofstream &output, int pageid, int slotid) {
-    if (node == nullptr)
+    if (node == NULL)
         return;
     storeNode(node, output, pageid, slotid, numSlot, dimension);
     preorderStore(node->left, output, slotid == numSlot - 1 ? pageid + 1 : pageid, slotid == numSlot - 1 ? 0 : slotid + 1);
@@ -68,7 +68,8 @@ void BallTree::preorderStore(ballTreeNode *node, std::ofstream &output, int page
 }
 
 void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data) {
-    node = new ballTreeNode(computeRadius(n, d, data), computeMean(n, d, data), d);
+    float *mean = computeMean(n, d, data);
+    node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
 
     if (n <= N0)
         return;
@@ -111,11 +112,10 @@ float BallTree::computeRadius(int n, int d, float **data, float *mean) {
     for (int i = 0; i < n; i++) {
         float radius = 0;
         for (int j = 0; j < d; j++) {
-            radius += pow(fabs(mean[j] - data[index][j]), 2);
+            radius += pow(fabs(mean[j] - data[i][j]), 2);
         }
 
         radius = sqrt(radius);
-        //得到根号值，即半径
         if (max < radius) {
             max = radius;
         }

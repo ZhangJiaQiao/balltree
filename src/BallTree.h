@@ -12,7 +12,7 @@ private:
     int numSlot;
 
     float *computeMean(int n, int d, float **data);
-    float computeRadius(int n, int d, float **data, float * mean);
+    float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
     void buildBall(ballTreeNode *&node, int n, int d, float **data);
@@ -26,17 +26,17 @@ public:
 
 	bool storeTree(const char* index_path);
 
-	bool restoreTree(const char* index_path);
+	//bool restoreTree(const char* index_path);
 	
-	int mipSearch(int d, float* query);
+	//int mipSearch(int d, float* query);
 
 	// optional
-	bool insertData(int d, float* data);
+	//bool insertData(int d, float* data);
 
 	// optional
-	bool deleteData(int d, float* data);
+	//bool deleteData(int d, float* data);
 
 	// optional
-	bool buildQuadTree(int n, int d, float** data);
+	//bool buildQuadTree(int n, int d, float** data);
 };
 #endif

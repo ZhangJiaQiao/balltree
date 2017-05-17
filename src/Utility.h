@@ -32,16 +32,16 @@ struct ballTreeNode {
 
     ballTreeNode() {
         radius = 0;
-        mean = nullptr;
+        mean = NULL;
         rid = Rid();
-        left = right = nullptr;
+        left = right = NULL;
     }
     ballTreeNode(float r, float* m, int d) {
         rid = Rid();
         radius = r;
         mean = new float[d];
         memcpy(mean, m, d);
-        left = right = nullptr;
+        left = right = NULL;
     }
 };
 
