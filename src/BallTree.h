@@ -7,19 +7,20 @@
 
 class BallTree {
 private:
-    ballTreeNode *root;
+    int DATA_SLOTSIZE;
+
+    ballTreeIndexEntry *root;
     int dimension;
     int numSlot;
-    int pageid, slotid;
+    int id;
 
     float *computeMean(int n, int d, float **data);
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeNode *&node, int n, int d, float **data);
+    void buildBall(ballTreeIndexEntry *&node, int n, int d, float **data, int fatherId);
 
-    void preorderSetRid(ballTreeNode *node, ballTreeNode *father, bool isLeft);
-    void preorderStore(ballTreeNode *node, std::ofstream &output);
+    void preorderStore(ballTreeIndexEntry *node, std::ofstream &output, std::streampos &filePtr);
 public:
 	BallTree();
 	~BallTree();

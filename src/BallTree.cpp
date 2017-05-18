@@ -8,8 +8,7 @@ BallTree::BallTree() {
     root = NULL;
     dimension = 0;
     numSlot = 0;
-    pageid = 0;
-    slotid = 0;
+    id = 0;
 }
 
 BallTree::~BallTree() {
@@ -18,8 +17,11 @@ BallTree::~BallTree() {
 
 bool BallTree::buildTree(int n, int d, float **data) {
     dimension = d;
-    numSlot = floor(65536 / (sizeof(int) * 7 + sizeof(float) * (d + 1)));
-    buildBall(root, n, d, data);
+    DATA_SLOTSIZE = sizeof(float) * dimension * N0 + sizeof(int);
+    numSlot = floor(65536 / INDEX_SLOTSIZE);
+    id = 0;
+    int fatherId = -1;
+    buildBall(root, n, d, data, fatherId);
 
     if (root == NULL)
         return false;
@@ -32,9 +34,8 @@ bool BallTree::storeTree(const char *index_path) {
     if (!output)
         return false;
 
-    pageid = slotid = 0;
-    preorderSetRid(root, NULL, true);
-    preorderStore(root, output);
+    std::streampos filePtr = 0;
+    preorderStore(root, output, filePtr);
     output.close();
     return true;
 }
@@ -67,35 +68,19 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
     return true;
 }
 
-void BallTree::preorderSetRid(ballTreeNode *node, ballTreeNode *father, bool isLeft) {
+void BallTree::preorderStore(ballTreeIndexEntry *node, std::ofstream &output, std::streampos &filePtr) {
     if (node == NULL)
         return;
-    node->rid.pageid = slotid == numSlot - 1 ? pageid++ : pageid;
-    node->rid.slotid = slotid++;
-    if (slotid == numSlot - 1) {
-        node->rid.slotid = 0;
-    }
-    if (father != NULL) {
-        if (isLeft)
-            father->left_rid = node->rid;
-        else
-            father->right_rid = node->rid;
-    }
-    preorderSetRid(node->left, node, true);
-    preorderSetRid(node->right, node, false);
-}
-
-void BallTree::preorderStore(ballTreeNode *node, std::ofstream &output) {
-    if (node == NULL)
-        return;
-    storeNode(node, output, numSlot, dimension);
+    storeNode(node, output, numSlot, dimension, filePtr);
     preorderStore(node->left, output);
     preorderStore(node->right, output);
 }
 
-void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data) {
+void BallTree::buildBall(ballTreeIndexEntry *&node, int n, int d, float **data, int fatherId) {
     float *mean = computeMean(n, d, data);
-    node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
+    node = new ballTreeIndexEntry(computeRadius(n, d, data, mean), mean, d);
+    node->id = id++;
+    node->fatherId = fatherId;
 
     if (n <= N0)
         return;
@@ -114,8 +99,8 @@ void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data) {
 
     float **leftData_ = parseFloatArr(leftData);
     float **rightData_ = parseFloatArr(rightData);
-    buildBall(node->left, leftData.size(), d, leftData_);
-    buildBall(node->right, rightData.size(), d, rightData_);
+    buildBall(node->left, leftData.size(), d, leftData_, node->id);
+    buildBall(node->right, rightData.size(), d, rightData_, node->id);
     delete[] leftData_;
     delete[] rightData_;
 }

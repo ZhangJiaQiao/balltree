@@ -1,4 +1,4 @@
 # BallTree
-  A kind of data structure that help do maximum inner-product search.
+A kind of data structure that help do maximum inner-product search.
 
-# DO NOT PUSH ANYTHING TO THIS BRANCH
+Now the problem is that cannot find a proper format to store the tree into a binary file.

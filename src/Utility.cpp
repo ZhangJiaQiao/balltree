@@ -8,17 +8,29 @@
 
 using namespace std;
 
-ballTreeNode::ballTreeNode() {
+ballTreeIndexEntry::ballTreeIndexEntry() {
     radius = 0;
     mean = NULL;
-    rid = Rid();
     left = right = NULL;
+    id = fatherId = -1;
+    isLeft = false;
 }
-ballTreeNode::ballTreeNode(float r, float* m, int d) {
-    rid = Rid();
+ballTreeIndexEntry::ballTreeIndexEntry(float r, float* m, int d) {
     radius = r;
-    mean = m;
+    mean = new float[d];
+    memcpy(mean, m, d);
     left = right = NULL;
+    id = fatherId = -1;
+    isLeft = false;
+}
+
+ballTreeDataEntry::ballTreeDataEntry() {
+    memset(table, NULL, N0);
+    fatherId = -1;
+}
+ballTreeDataEntry::ballTreeDataEntry(float **t, int size) {
+    memcpy(table, t, size);
+    fatherId = -1;
 }
 
 bool read_data(int n, int d, float** &data, const char* file_name) {
@@ -52,32 +64,30 @@ float **parseFloatArr(std::vector<float*> v) {
     return data;
 }
 
-void storeNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d) {
-    if (node->rid.slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(node->rid.pageid * 65536);
+void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
+    int pageid = parsePageId(filePtr);
+    int slotid = parseSlotId(filePtr);
+    if (slotid == 0) {    // bitMap needs to be inserted.
+        output.seekp(filePtr);
         bool *bitMap = new bool[numSlot];
         memset(bitMap, 0, numSlot);
         output.write((char*)bitMap, numSlot);
+        filePtr = output.tellp();
         delete[] bitMap;
     }
-    output.seekp(node->rid.pageid * 65536 + node->rid.slotid);
+    output.seekp(pageid * 65536 + slotid);
     bool a = true;
     output.write((char*)&a, sizeof(bool));
     
-    output.seekp(node->rid.pageid * 65536 + node->rid.slotid * (sizeof(int) * 7 + sizeof(float) * (d + 1)) + numSlot);
+    output.seekp(pageid * 65536 + slotid * INDEX_SLOTSIZE + numSlot);
     float *floatArr = new float[d + 1];
-    int *intArr = new int[7];
-    intArr[0] = node->rid.pageid;
-    intArr[1] = node->rid.slotid;
-    intArr[2] = node->left_rid.pageid;
-    intArr[3] = node->left_rid.slotid;
-    intArr[4] = node->right_rid.pageid;
-    intArr[5] = node->right_rid.slotid;
-    intArr[6] = d;
+    int *intArr = new int[3];
+    intArr[0] = node->id;
+    intArr[1] = node->fatherId;
+    intArr[2] = d;
     floatArr[0] = node->radius;
-    for (int i = 0; i < d; i++)
-        floatArr[i + 1] = node->mean[i];
-    output.write((char*)intArr, 7 * sizeof(int));
+    memcpy(floatArr + 1, node->mean, d);
+    output.write((char*)intArr, 3 * sizeof(int));
     output.write((char*)floatArr, (d + 1) * sizeof(float));
     delete[] floatArr;
     delete[] intArr;
