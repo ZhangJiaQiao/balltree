@@ -94,7 +94,7 @@ void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int
 }
 
 int parsePageId(std::streampos filePtr) {
-    ;
+    return 0;
 }
 
 int parseSlotId(std::streampos filePtr, int slotsize) {
