@@ -9,7 +9,7 @@ This implementation is the outer-storage version. The ball trees are build in th
 
 ## Tasks
 
-1. Tree Buiding. --- Finished.
+1. Tree Building. --- Finished.
 2. Tree Storage. --- 80%.
 3. Tree Loading. --- 0%.
 4. Maximum Inner-product and Tree Trimming. --- 0%.
