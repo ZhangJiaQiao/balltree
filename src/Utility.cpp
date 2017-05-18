@@ -66,7 +66,7 @@ float **parseFloatArr(std::vector<float*> v) {
 
 void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
     int pageid = parsePageId(filePtr);
-    int slotid = parseSlotId(filePtr, INDEX_SLOTSIZE);
+    int slotid = parseSlotId(filePtr, INDEX_SLOTSIZE, numSlot);
     if (slotid == 0) {    // bitMap needs to be inserted.
         output.seekp(filePtr);
         bool *bitMap = new bool[numSlot];
@@ -97,6 +97,6 @@ int parsePageId(std::streampos filePtr) {
     return 0;
 }
 
-int parseSlotId(std::streampos filePtr, int slotsize) {
+int parseSlotId(std::streampos filePtr, int slotsize, int numSlot) {
     ;
 }
