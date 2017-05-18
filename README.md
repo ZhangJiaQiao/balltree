@@ -36,9 +36,10 @@ Finish the queries with as little memory as possible and as fast as possible.
 
 Mnist (For debugging) and Yahoo! Music
 
-| Datasets | #Objects | #Dimension | #Query | B | Data Size |
-| Mnist | 60,000 | 50 | 1000 | 64KB | 9.4MB |
-| Yahoo! Music | 624,961 | 300 | 1000 | 64KB | 2.3GB |
+Datasets | \#Objects | \#Dimension | \#Query | B | Data Size
+-------- | -------- | ---------- | ------ | - | ---------
+Mnist | 60,000 | 50 | 1000 | 64KB | 9.4MB
+Yahoo! Music | 624,961 | 300 | 1000 | 64KB | 2.3GB
 
 ## Storage Format
 
