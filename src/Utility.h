@@ -47,6 +47,6 @@ float **parseFloatArr(std::vector<float*> v);
 void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr);
 
 int parsePageId(std::streampos filePtr);
-int parseSlotId(std::streampos filePtr);
+int parseSlotId(std::streampos filePtr, int slotsize);
 
 #endif
