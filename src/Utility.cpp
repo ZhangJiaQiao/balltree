@@ -91,9 +91,9 @@ void storeDataNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d
 }
 
 int parsePageId(std::streampos filePtr) {
-    return 0;
+    return filePtr/65536;
 }
 
 int parseSlotId(std::streampos filePtr, int slotsize, int numSlot) {
-    ;
+    return (int)(((filePtr%65536)-numSlot)/slotsize);
 }
