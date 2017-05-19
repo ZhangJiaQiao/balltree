@@ -43,6 +43,7 @@ bool read_data(int n, int d, float** &data, const char* file_name) {
 		for (int j = 0; j < d; j++) {
 			fscanf(fin, "%f", &data[i][j]);
 		}
+        printf("Data %d loaded.\n", id);
 	}
 
 	printf("Finish reading %s\n", file_name);

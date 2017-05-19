@@ -41,7 +41,6 @@ void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, int fa
     node->id = id++;
     node->fatherId = fatherId;
     node->isLeft = isLeft;
-
     delete[] mean;
 
     if (n <= N0) {
@@ -51,14 +50,18 @@ void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, int fa
             node->table[i] = new float[d];
             memcpy(node->table[i], data[i], d * sizeof(float));
         }
+        printf("Tree node Data Entry %d built.\n", node->id);
         return;
     }
+
+    printf("Tree node index Entry %d built.\n", node->id);
 
     float *A, *B;
     MakeBallTreeSplit(n, d, data, A, B);
 
     std::vector<float*> leftData, rightData;
     for (int i = 0; i < n; i++) {
+        printf("In record %d of %d datas.\n", i, n);
         if (computeDistance(data[i], A) <= computeDistance(data[i], B)) {
             leftData.push_back(data[i]);
         } else {
@@ -98,6 +101,9 @@ void BallTree::preorderStore(ballTreeNode *node, std::ofstream &indexOutput, std
         storeIndexNode(node, indexOutput, indexPtr);
     else
         storeDataNode(node, dataOutput, dataPtr);
+
+    printf("Tree node %d stored.\n", node->id);
+
     preorderStore(node->left, indexOutput, dataOutput, indexPtr, dataPtr);
     preorderStore(node->right, indexOutput, dataOutput, indexPtr, dataPtr);
 }
@@ -216,6 +222,7 @@ float BallTree::computeDistance(float *x, float *y) {
 
 bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B) {
     float *pick = data[0];
+    A = data[0];
     float maxDistance = 0;
     for (int i = 0; i < n; i++) {
         float curDistance = computeDistance(pick, data[i]);
@@ -225,6 +232,7 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
         }
     }
     maxDistance = 0;
+    B = pick;
     for (int i = 0; i < n; i++) {
         float curDistance = computeDistance(A, data[i]);
         if (curDistance > maxDistance) {
