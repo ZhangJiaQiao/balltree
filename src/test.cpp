@@ -13,7 +13,7 @@
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 600, d = 50;
+int n = 60000, d = 50;
 int qn = 1000;
 #endif
 
@@ -31,7 +31,7 @@ int main() {
 
 	sprintf(data_path, "%s/src/dataset.txt", dataset);
 	sprintf(query_path, "%s/src/query.txt", dataset);
-	sprintf(index_path, "%s/index/sample.dat", dataset);
+	sprintf(index_path, "%s/index", dataset);
 	sprintf(output_path, "%s/dst/answer.txt", dataset);
 
 	if (!read_data(n, d, data, data_path)) {

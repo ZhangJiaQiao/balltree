@@ -16,26 +16,19 @@ struct Rid {
     }
 };
 
-struct ballTreeIndexEntry {
+struct ballTreeNode {
     float radius;
     float *mean;
     int id;
     int fatherId;
     bool isLeft;
+    float **table;
 
-    ballTreeIndexEntry *left;
-    ballTreeIndexEntry *right;
+    ballTreeNode *left;
+    ballTreeNode *right;
 
-    ballTreeIndexEntry();
-    ballTreeIndexEntry(float r, float* m, int d);
-};
-
-struct ballTreeDataEntry {
-    float *table[N0];
-    int fatherId;
-
-    ballTreeDataEntry();
-    ballTreeDataEntry(float **t, int size);
+    ballTreeNode();
+    ballTreeNode(float r, float* m, int d);
 };
 
 const int INDEX_SLOTSIZE = sizeof(float) * 2 + sizeof(int) * 3 + sizeof(bool);
@@ -44,7 +37,8 @@ bool read_data(int n, int d, float** &data, const char* file_name);
 
 float **parseFloatArr(std::vector<float*> v);
 
-void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr);
+void storeIndexNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr);
+void storeDataNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr);
 
 int parsePageId(std::streampos filePtr);
 int parseSlotId(std::streampos filePtr, int slotsize, int numSlot);

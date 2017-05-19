@@ -8,29 +8,22 @@
 
 using namespace std;
 
-ballTreeIndexEntry::ballTreeIndexEntry() {
+ballTreeNode::ballTreeNode() {
     radius = 0;
     mean = NULL;
     left = right = NULL;
     id = fatherId = -1;
     isLeft = false;
+    table = NULL;
 }
-ballTreeIndexEntry::ballTreeIndexEntry(float r, float* m, int d) {
+ballTreeNode::ballTreeNode(float r, float* m, int d) {
     radius = r;
     mean = new float[d];
     memcpy(mean, m, d);
     left = right = NULL;
     id = fatherId = -1;
     isLeft = false;
-}
-
-ballTreeDataEntry::ballTreeDataEntry() {
-    memset(table, NULL, N0);
-    fatherId = -1;
-}
-ballTreeDataEntry::ballTreeDataEntry(float **t, int size) {
-    memcpy(table, t, size);
-    fatherId = -1;
+    table = NULL;
 }
 
 bool read_data(int n, int d, float** &data, const char* file_name) {
@@ -64,7 +57,7 @@ float **parseFloatArr(std::vector<float*> v) {
     return data;
 }
 
-void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
+void storeIndexNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
     int pageid = parsePageId(filePtr);
     int slotid = parseSlotId(filePtr, INDEX_SLOTSIZE, numSlot);
     if (slotid == 0) {    // bitMap needs to be inserted.
@@ -91,6 +84,10 @@ void storeNode(ballTreeIndexEntry *node, std::ofstream &output, int numSlot, int
     output.write((char*)floatArr, (d + 1) * sizeof(float));
     delete[] floatArr;
     delete[] intArr;
+}
+
+void storeDataNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
+    ;
 }
 
 int parsePageId(std::streampos filePtr) {

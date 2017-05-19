@@ -9,7 +9,7 @@ class BallTree {
 private:
     int DATA_SLOTSIZE;
 
-    ballTreeIndexEntry *root;
+    ballTreeNode *root;
     int dimension;
     int numSlot;
     int id;
@@ -18,9 +18,10 @@ private:
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeIndexEntry *&node, int n, int d, float **data, int fatherId);
+    void buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId);
 
-    void preorderStore(ballTreeIndexEntry *node, std::ofstream &output, std::streampos &filePtr);
+    void preorderStore(ballTreeNode *node, std::ofstream &indexOutput, 
+        std::ofstream &dataOutput, std::streampos &filePtr, std::streampos &filePtr1);
 public:
 	BallTree();
 	~BallTree();

@@ -28,62 +28,20 @@ bool BallTree::buildTree(int n, int d, float **data) {
     return true;
 }
 
-bool BallTree::storeTree(const char *index_path) {
-    std::ofstream output(index_path, std::ofstream::out | std::ofstream::binary);
-
-    if (!output)
-        return false;
-
-    std::streampos filePtr = 0;
-    preorderStore(root, output, filePtr);
-    output.close();
-    return true;
-}
-
-float BallTree::computeDistance(float *x, float *y) {
-    float squareSum = 0;
-    for (int i = 0; i < dimension; i++)
-        squareSum += (x[i] - y[i]) * (x[i] - y[i]);
-    return sqrt(squareSum);
-}
-
-bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B) {
-    float *pick = data[0];
-    float maxDistance = 0;
-    for (int i = 0; i < n; i++) {
-        float curDistance = computeDistance(pick, data[i]);
-        if (curDistance > maxDistance) {
-            maxDistance = curDistance;
-            A = data[i];
-        }
-    }
-    maxDistance = 0;
-    for (int i = 0; i < n; i++) {
-        float curDistance = computeDistance(A, data[i]);
-        if (curDistance > maxDistance) {
-            maxDistance = curDistance;
-            B = data[i];
-        }
-    }
-    return true;
-}
-
-void BallTree::preorderStore(ballTreeIndexEntry *node, std::ofstream &output, std::streampos &filePtr) {
-    if (node == NULL)
-        return;
-    storeNode(node, output, numSlot, dimension, filePtr);
-    preorderStore(node->left, output);
-    preorderStore(node->right, output);
-}
-
-void BallTree::buildBall(ballTreeIndexEntry *&node, int n, int d, float **data, int fatherId) {
+void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId) {
     float *mean = computeMean(n, d, data);
-    node = new ballTreeIndexEntry(computeRadius(n, d, data, mean), mean, d);
+    node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
     node->id = id++;
     node->fatherId = fatherId;
 
-    if (n <= N0)
+    if (n <= N0) {
+        node->table = new float*[n];
+        for (int i = 0; i < n; i++) {
+            node->table[i] = new float[d];
+            memcpy(node->table[i], data[i], d);
+        }
         return;
+    }
 
     float *A, *B;
     MakeBallTreeSplit(n, d, data, A, B);
@@ -103,6 +61,34 @@ void BallTree::buildBall(ballTreeIndexEntry *&node, int n, int d, float **data, 
     buildBall(node->right, rightData.size(), d, rightData_, node->id);
     delete[] leftData_;
     delete[] rightData_;
+}
+
+bool BallTree::storeTree(const char *index_path) {
+    char indexEntryPath[L], dataEntryPath[L];
+    sprintf(indexEntryPath, "%s/indexEntries.dat", index_path);
+    sprintf(dataEntryPath, "%s/dataEntries.dat", index_path);
+    std::ofstream indexOutput(indexEntryPath, std::ofstream::out | std::ofstream::binary);
+    std::ofstream dataOutput(indexEntryPath, std::ofstream::out | std::ofstream::binary);
+
+    if (!indexOutput || !dataOutput)
+        return false;
+
+    std::streampos indexPtr = 0, dataPtr = 0;
+    preorderStore(root, indexOutput, dataOutput, indexPtr, dataPtr);
+    indexOutput.close();
+    dataOutput.close();
+    return true;
+}
+
+void BallTree::preorderStore(ballTreeNode *node, std::ofstream &indexOutput, std::ofstream &dataOutput, std::streampos &indexPtr, std::streampos &dataPtr) {
+    if (node == NULL)
+        return;
+    if (node->table == NULL)
+        storeIndexNode(node, indexOutput, numSlot, dimension, indexPtr);
+    else
+        storeDataNode(node, dataOutput, numSlot, dimension, dataPtr);
+    preorderStore(node->left, indexOutput, dataOutput, indexPtr, dataPtr);
+    preorderStore(node->right, indexOutput, dataOutput, indexPtr, dataPtr);
 }
 
 float* BallTree::computeMean(int n, int d, float **data) {
@@ -132,4 +118,32 @@ float BallTree::computeRadius(int n, int d, float **data, float *mean) {
         }
     }
     return max;
+}
+
+float BallTree::computeDistance(float *x, float *y) {
+    float squareSum = 0;
+    for (int i = 0; i < dimension; i++)
+        squareSum += (x[i] - y[i]) * (x[i] - y[i]);
+    return sqrt(squareSum);
+}
+
+bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B) {
+    float *pick = data[0];
+    float maxDistance = 0;
+    for (int i = 0; i < n; i++) {
+        float curDistance = computeDistance(pick, data[i]);
+        if (curDistance > maxDistance) {
+            maxDistance = curDistance;
+            A = data[i];
+        }
+    }
+    maxDistance = 0;
+    for (int i = 0; i < n; i++) {
+        float curDistance = computeDistance(A, data[i]);
+        if (curDistance > maxDistance) {
+            maxDistance = curDistance;
+            B = data[i];
+        }
+    }
+    return true;
 }
