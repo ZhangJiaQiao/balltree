@@ -31,8 +31,6 @@ struct ballTreeNode {
     ballTreeNode(float r, float* m, int d);
 };
 
-const int INDEX_SLOTSIZE = sizeof(float) * 2 + sizeof(int) * 3 + sizeof(bool);
-
 bool read_data(int n, int d, float** &data, const char* file_name);
 
 float **parseFloatArr(std::vector<float*> v);

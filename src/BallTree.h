@@ -7,11 +7,13 @@
 
 class BallTree {
 private:
+    int INDEX_SLOTSIZE;
     int DATA_SLOTSIZE;
 
     ballTreeNode *root;
     int dimension;
-    int numSlot;
+    int numIndexSlot;
+    int numDataSlot;
     int id;
 
     float *computeMean(int n, int d, float **data);
@@ -21,7 +23,9 @@ private:
     void buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId);
 
     void preorderStore(ballTreeNode *node, std::ofstream &indexOutput, 
-        std::ofstream &dataOutput, std::streampos &filePtr, std::streampos &filePtr1);
+        std::ofstream &dataOutput, std::streampos &indexPtr, std::streampos &dataPtr);
+    void storeIndexNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr);
+    void storeDataNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr);
 public:
 	BallTree();
 	~BallTree();
@@ -43,6 +47,7 @@ public:
 	// optional
 	//bool buildQuadTree(int n, int d, float** data);
 
-    int getNumSlot() { return numSlot; }
+    int getNumIndexSlot() { return numIndexSlot; }
+    int getNumDataSlot() { return numDataSlot; }
 };
 #endif

@@ -7,7 +7,8 @@
 BallTree::BallTree() {
     root = NULL;
     dimension = 0;
-    numSlot = 0;
+    numIndexSlot = 0;
+    numDataSlot = 0;
     id = 0;
 }
 
@@ -18,7 +19,10 @@ BallTree::~BallTree() {
 bool BallTree::buildTree(int n, int d, float **data) {
     dimension = d;
     DATA_SLOTSIZE = sizeof(float) * dimension * N0 + sizeof(int);
-    numSlot = floor(65536 / INDEX_SLOTSIZE);
+    INDEX_SLOTSIZE = sizeof(int) * 3 + sizeof(float) * (dimension + 1);
+    numIndexSlot = floor(65536 / INDEX_SLOTSIZE);
+    numDataSlot = floor(65536 / DATA_SLOTSIZE);
+
     id = 0;
     int fatherId = -1;
     buildBall(root, n, d, data, fatherId);
@@ -84,11 +88,46 @@ void BallTree::preorderStore(ballTreeNode *node, std::ofstream &indexOutput, std
     if (node == NULL)
         return;
     if (node->table == NULL)
-        storeIndexNode(node, indexOutput, numSlot, dimension, indexPtr);
+        storeIndexNode(node, indexOutput, indexPtr);
     else
-        storeDataNode(node, dataOutput, numSlot, dimension, dataPtr);
+        storeDataNode(node, dataOutput, dataPtr);
     preorderStore(node->left, indexOutput, dataOutput, indexPtr, dataPtr);
     preorderStore(node->right, indexOutput, dataOutput, indexPtr, dataPtr);
+}
+
+void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr) {
+    int pageid = parsePageId(filePtr);
+    int slotid = parseSlotId(filePtr, INDEX_SLOTSIZE, numIndexSlot);
+
+    if (slotid == 0) {    // bitMap needs to be inserted.
+        output.seekp(filePtr);
+        bool *bitMap = new bool[numIndexSlot];
+        memset(bitMap, 0, numIndexSlot);
+        output.write((char*)bitMap, numIndexSlot);
+        filePtr = output.tellp();
+        delete[] bitMap;
+    }
+    output.seekp(pageid * 65536 + slotid);
+    bool a = true;
+    output.write((char*)&a, sizeof(bool));
+
+    output.seekp(pageid * 65536 + slotid * INDEX_SLOTSIZE + numIndexSlot);
+    float *floatArr = new float[dimension + 1];
+    int *intArr = new int[3];
+    intArr[0] = node->id;
+    intArr[1] = node->fatherId;
+    intArr[2] = dimension;
+    floatArr[0] = node->radius;
+    memcpy(floatArr + 1, node->mean, dimension);
+    output.write((char*)intArr, 3 * sizeof(int));
+    output.write((char*)floatArr, (dimension + 1) * sizeof(float));
+
+    delete[] floatArr;
+    delete[] intArr;
+}
+
+void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr) {
+    ;
 }
 
 float* BallTree::computeMean(int n, int d, float **data) {

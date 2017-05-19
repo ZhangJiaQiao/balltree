@@ -18,7 +18,7 @@ This implementation is the outer-storage version. The ball trees are build in th
 
 ### Current Status
 
-Function storeDataNode needs to be implemented.
+Function BallTree::storeDataNode needs to be implemented.
 
 ### Tree Storage
 

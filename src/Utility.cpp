@@ -57,39 +57,6 @@ float **parseFloatArr(std::vector<float*> v) {
     return data;
 }
 
-void storeIndexNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
-    int pageid = parsePageId(filePtr);
-    int slotid = parseSlotId(filePtr, INDEX_SLOTSIZE, numSlot);
-    if (slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(filePtr);
-        bool *bitMap = new bool[numSlot];
-        memset(bitMap, 0, numSlot);
-        output.write((char*)bitMap, numSlot);
-        filePtr = output.tellp();
-        delete[] bitMap;
-    }
-    output.seekp(pageid * 65536 + slotid);
-    bool a = true;
-    output.write((char*)&a, sizeof(bool));
-    
-    output.seekp(pageid * 65536 + slotid * INDEX_SLOTSIZE + numSlot);
-    float *floatArr = new float[d + 1];
-    int *intArr = new int[3];
-    intArr[0] = node->id;
-    intArr[1] = node->fatherId;
-    intArr[2] = d;
-    floatArr[0] = node->radius;
-    memcpy(floatArr + 1, node->mean, d);
-    output.write((char*)intArr, 3 * sizeof(int));
-    output.write((char*)floatArr, (d + 1) * sizeof(float));
-    delete[] floatArr;
-    delete[] intArr;
-}
-
-void storeDataNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr) {
-    ;
-}
-
 int parsePageId(std::streampos filePtr) {
     return filePtr/65536;
 }
