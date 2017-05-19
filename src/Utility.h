@@ -2,6 +2,7 @@
 #define __UTILITY_H
 
 #define L 256
+#define PAGE_SIZE 65536
 
 struct Rid {
     int pageid;
@@ -23,6 +24,7 @@ struct ballTreeNode {
     int fatherId;
     bool isLeft;
     float **table;
+    int tableSize;
 
     ballTreeNode *left;
     ballTreeNode *right;
@@ -34,9 +36,6 @@ struct ballTreeNode {
 bool read_data(int n, int d, float** &data, const char* file_name);
 
 float **parseFloatArr(std::vector<float*> v);
-
-void storeIndexNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr);
-void storeDataNode(ballTreeNode *node, std::ofstream &output, int numSlot, int d, std::streampos &filePtr);
 
 int parsePageId(std::streampos filePtr);
 int parseSlotId(std::streampos filePtr, int slotsize, int numSlot);

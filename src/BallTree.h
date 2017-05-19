@@ -20,7 +20,7 @@ private:
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId);
+    void buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId, bool isLeft);
 
     void preorderStore(ballTreeNode *node, std::ofstream &indexOutput, 
         std::ofstream &dataOutput, std::streampos &indexPtr, std::streampos &dataPtr);
@@ -49,5 +49,7 @@ public:
 
     int getNumIndexSlot() { return numIndexSlot; }
     int getNumDataSlot() { return numDataSlot; }
+    int getIndexSlotSize() { return INDEX_SLOTSIZE; }
+    int getDataSlotSize() { return DATA_SLOTSIZE; }
 };
 #endif

@@ -10,7 +10,7 @@ This implementation is the outer-storage version. The ball trees are build in th
 ## Tasks
 
 1. Tree Building. --- Finished.
-2. Tree Storage. --- 80%.
+2. Tree Storage. --- Finished.
 3. Tree Loading. --- 0%.
 4. Maximum Inner-product and Tree Trimming. --- 0%.
 5. (optional) Tree insertion and deletion. --- 0%.
@@ -18,7 +18,7 @@ This implementation is the outer-storage version. The ball trees are build in th
 
 ### Current Status
 
-Function BallTree::storeDataNode needs to be implemented.
+Tree Storage is finished. Memory costs a lot lmao.
 
 ### Tree Storage
 
@@ -49,4 +49,4 @@ Leaf Node
 
 Non-Leaf Node
 
-{ int(id), int(fatherid), float\[N0\]\[dimension\](N0 tuples) }
+{ int(id), int(fatherid), int(k) float\[k\]\[dimension\](k tuples) }

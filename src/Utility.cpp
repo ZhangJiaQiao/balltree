@@ -15,15 +15,17 @@ ballTreeNode::ballTreeNode() {
     id = fatherId = -1;
     isLeft = false;
     table = NULL;
+    tableSize = 0;
 }
 ballTreeNode::ballTreeNode(float r, float* m, int d) {
     radius = r;
     mean = new float[d];
-    memcpy(mean, m, d);
+    memcpy(mean, m, d * sizeof(float));
     left = right = NULL;
     id = fatherId = -1;
     isLeft = false;
     table = NULL;
+    tableSize = 0;
 }
 
 bool read_data(int n, int d, float** &data, const char* file_name) {
@@ -58,9 +60,11 @@ float **parseFloatArr(std::vector<float*> v) {
 }
 
 int parsePageId(std::streampos filePtr) {
-    return filePtr/65536;
+    return filePtr/PAGE_SIZE;
 }
 
 int parseSlotId(std::streampos filePtr, int slotsize, int numSlot) {
-    return (int)(((filePtr%65536)-numSlot)/slotsize);
+    if (filePtr % PAGE_SIZE == 0)
+        return 0;
+    return (int)(((filePtr%PAGE_SIZE)-numSlot)/slotsize);
 }

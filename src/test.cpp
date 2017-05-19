@@ -9,7 +9,7 @@
 #include "Utility.h"
 #include "BallTree.h"
 
-#define MNIST
+#define YAHOO
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
@@ -19,7 +19,7 @@ int qn = 1000;
 
 #ifdef YAHOO
 char dataset[L] = "Yahoo";
-int n = 624, d = 300;
+int n = 624961, d = 300;
 int qn = 1000;
 #endif
 
@@ -42,13 +42,15 @@ int main() {
 	ball_tree1.buildTree(n, d, data);
 	ball_tree1.storeTree(index_path);
 
-    std::ifstream testData(index_path, std::ios::binary | std::ios::in);
-    
-    testData.seekg(ball_tree1.getNumSlot() + sizeof(int) * 7 + sizeof(float) * (d + 1));
+    // Read Test for debugging.
+    std::ifstream testData("Mnist/index/indexEntries.dat", std::ios::binary | std::ios::in);
+    testData.seekg(ball_tree1.getNumIndexSlot() + ball_tree1.getIndexSlotSize() * 2);
     float floatArr[51];
-    int intArr[7];
-    testData.read((char*)intArr, sizeof(int) * 7);
+    int intArr[3];
+    bool isLeft;
+    testData.read((char*)intArr, sizeof(int) * 3);
     testData.read((char*)floatArr, sizeof(float) * (d + 1));
+    testData.read((char*)&isLeft, sizeof(bool));
 
 	//if (!read_data(qn, d, query, query_path));
 	//FILE* fout = fopen(output_path, "w");
