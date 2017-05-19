@@ -18,7 +18,7 @@ This implementation is the outer-storage version. The ball trees are build in th
 
 ### Current Status
 
-Only finish the storage of leaf nodes, but have no idea about the storage of non-leaf nodes.
+Function storeDataNode needs to be implemented.
 
 ### Tree Storage
 
@@ -49,4 +49,4 @@ Leaf Node
 
 Non-Leaf Node
 
-{ int(fatherid), float\[N0\]\[dimension\](N0 tuples) }
+{ int(id), int(fatherid), float\[N0\]\[dimension\](N0 tuples) }
