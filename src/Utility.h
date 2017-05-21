@@ -18,16 +18,21 @@ struct Rid {
 };
 
 struct ballTreeNode {
-    float radius;
-    float *mean;
-    int id;
-    int fatherId;
-    bool isLeft;
-    float **table;
-    int tableSize;
+    float radius;  //球的半径
+    float *mean;  //球的圆心
 
-    ballTreeNode *left;
-    ballTreeNode *right;
+    int leftPageID;  //左节点页号
+    int leftSlotID;  //左节点槽号
+    int rightPageID;  //右节点页号
+    int rightSlotID;  //右节点槽号
+    bool isLeftLeaf;  //左节点是否为叶子
+    bool isRightLeaf;  //右节点是否为叶子
+    
+    float **table;  //如果为叶子，table存数据
+    int tableSize;  //table的大小
+
+    ballTreeNode *left;  //左节点的索引
+    ballTreeNode *right;  //右节点的索引
 
     ballTreeNode();
     ballTreeNode(float r, float* m, int d);
@@ -40,4 +45,9 @@ float **parseFloatArr(std::vector<float*> v);
 int parsePageId(std::streampos filePtr);
 int parseSlotId(std::streampos filePtr, int slotsize, int numSlot);
 
+//--------------------ZJQ:20170521任务3与任务4实现--------------------------//
+struct Mip {
+    float product;
+    int index;
+}
 #endif

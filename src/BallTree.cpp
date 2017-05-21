@@ -4,6 +4,9 @@
 
 #include "BallTree.h"
 
+const int DATA_INT_SIZE = 5;
+const int INDEX_INT_SIZE = 2;
+
 BallTree::BallTree() {
     root = NULL;
     dimension = 0;
@@ -18,14 +21,15 @@ BallTree::~BallTree() {
 
 bool BallTree::buildTree(int n, int d, float **data) {
     dimension = d;
-    DATA_SLOTSIZE = sizeof(int) * 3 + sizeof(float) * dimension * N0 + sizeof(bool);
-    INDEX_SLOTSIZE = sizeof(int) * 3 + sizeof(float) * (dimension + 1) + sizeof(bool);
+    DATA_SLOTSIZE = sizeof(int) * DATA_INT_SIZE + sizeof(float) * dimension * N0 + sizeof(bool) * 2;
+    INDEX_SLOTSIZE = sizeof(int) * INDEX_INT_SIZE + sizeof(float) * (dimension + 1) + sizeof(bool) * 2;
     numIndexSlot = floor(PAGE_SIZE / INDEX_SLOTSIZE);
     numDataSlot = floor(PAGE_SIZE / DATA_SLOTSIZE);
 
-    id = 0;
-    int fatherId = -1;
-    buildBall(root, n, d, data, fatherId, true);
+    curPageID = 0; //根节点页号槽号默认为(0,0)，剩下节点从(0,1)开始
+    curSlotID = 1;
+    //int fatherId = -1;
+    buildBall(root, n, d, data, false, false);
 
     for (int i = 0; i < n; i++)
         delete[] data[i];
@@ -35,12 +39,18 @@ bool BallTree::buildTree(int n, int d, float **data) {
     return true;
 }
 
-void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId, bool isLeft) {
+void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, bool isLeftLeaf, bool isRightLeaf) {
+    if (curSlotID >= numIndexSlot) {
+        curPageID++;
+    }
+
     float *mean = computeMean(n, d, data);
     node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
-    node->id = id++;
-    node->fatherId = fatherId;
-    node->isLeft = isLeft;
+    //node->id = id++;
+    //node->fatherId = fatherId;
+    //node->isLeft = isLeft;
+
+    node->leftPageID
     delete[] mean;
 
     if (n <= N0) {
@@ -185,12 +195,12 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, std::str
 }
 
 float* BallTree::computeMean(int n, int d, float **data) {
-    float *mean = new float[d];
+    float *mean = new float[d - 1];
 
     for (int i = 0; i < d; i++) {
         float tempSum = 0;
         for (int j = 0; j < n; j++) {
-            tempSum += data[j][i];
+            tempSum += data[j][i + 1];
         }
         mean[i] = tempSum / n;
     }
@@ -201,8 +211,8 @@ float BallTree::computeRadius(int n, int d, float **data, float *mean) {
     float max = 0;
     for (int i = 0; i < n; i++) {
         float radius = 0;
-        for (int j = 0; j < d; j++) {
-            radius += pow(fabs(mean[j] - data[i][j]), 2);
+        for (int j = 0; j < d - 1; j++) {
+            radius += pow(fabs(mean[j] - data[i][j + 1]), 2);
         }
 
         radius = sqrt(radius);
@@ -215,7 +225,7 @@ float BallTree::computeRadius(int n, int d, float **data, float *mean) {
 
 float BallTree::computeDistance(float *x, float *y) {
     float squareSum = 0;
-    for (int i = 0; i < dimension; i++)
+    for (int i = 1; i < dimension; i++)
         squareSum += (x[i] - y[i]) * (x[i] - y[i]);
     return sqrt(squareSum);
 }
@@ -242,3 +252,93 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
     }
     return true;
 }
+
+//-----------------------ZJQ:20170521任务3与4实现-----------------------//
+bool BallTree::restoreTree(const char* index_path) {
+    std::ifstream infile(index_path, ios::binary);
+    if (!infile) {
+        cout << "open " << index_path << " failed!" << endl;
+        return false;
+    }
+    //--------------下面实现的代码为读取根节点的所有信息，树的维度，槽长以及槽数---------------//
+
+    //-------------------------------------------------------------------------------//
+    return true;
+}
+//restore()函数将树的根节点设置即可，一次找一个节点-------uncompleted
+int BallTree::mipSearch(int d, float* query) {
+    dimension = d;
+
+    Mip mip;
+    mip.product = -1;
+    mip.index = -1;
+    //记录最大内积及目标序号
+    TreeSearch(query, root, mip);
+    return mip.index；
+}
+
+void BallTree::TreeSearch(float* query, ballTreeNode* node, Mip &mip) {
+    if (mip.product < MIP(query, node)) {
+        if (node->table == NULL) {
+            LinearSearch(query, node, mip)
+        }
+        else {
+            node->left = getNode(node->leftPageID, node->leftSlotID);
+            node->right = getNode(node->rightPageID, node->rightSlotID);
+            float leftProduct = MIP(query, node->left);
+            float rightProduct = MIP(query, node->right);
+            if (leftProduct < rightProduct) {
+                TreeSearch(query, node->right, mip);
+                delete node->right;
+                TreeSearch(query, node->left, mip);
+                delete node->left;
+            }
+            else {
+                TreeSearch(query, node->left, mip);
+                delete node->left;
+                TreeSearch(query, node->right, mip);
+                delete node->right;
+            }
+        }
+    }
+}
+//mipSearch()与TreeSearch()分别对应论文的算法5,4的伪代码，实现检索功能--------completed
+void BallTree::LinearSearch(float* query, ballTreeNode* node, Mip& mip) {
+    for (int i = 0; i < node->tableSize; i++) {
+        float newProduct = computeInnerProduct(query, node->table[i]);
+        if (newProduct > mip.product) {
+            mip.index = node->table[i][0];
+            //这里的index位每一个数据项的第一个数
+            mip.product = newProduct;
+        }
+    }
+}
+//对存有数据的叶子节点进行线性查找-------completed
+float BallTree::computeInnerProduct(float* query, float* data) {
+    float product = 0;
+    for (int i = 0; i < dimension - 1; i++) {
+        product += query[i] * data[i + 1];
+    }
+    return product;
+}
+//计算内积--------completed
+float BallTree::MIP(float *query, ballTreeNode* node) {
+    float product;
+    for (int i = 0; i < dimension - 1; i++) {
+        product += query[i] * node->mean[i];
+    }
+    product += node->radius;
+    return product;
+}
+//估算球的上界与query的内积--------completed
+
+ballTreeNode* BallTree::getNode(int pageID, int slotID) {
+    ballTreeNode* node = new ballTreeNode();
+    //---------------下面填写代码----------------//
+
+
+
+    //-------------------------------------------//
+    return node;
+}
+//根据页号和槽号获得节点数据--------------------umcompeleted

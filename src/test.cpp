@@ -13,13 +13,13 @@
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 60000, d = 50;
+int n = 60000, d = 51;
 int qn = 1000;
 #endif
 
 #ifdef YAHOO
 char dataset[L] = "Yahoo";
-int n = 624961, d = 300;
+int n = 624961, d = 301;
 int qn = 1000;
 #endif
 
@@ -52,28 +52,28 @@ int main() {
     testData.read((char*)floatArr, sizeof(float) * (d + 1));
     testData.read((char*)&isLeft, sizeof(bool));
 
-	//if (!read_data(qn, d, query, query_path));
-	//FILE* fout = fopen(output_path, "w");
-	//if (!fout) {
-	//	printf("can't open %s!\n", output_path);
-	//	return 1;
-	//}
+	if (!read_data(qn, d, query, query_path));
+	FILE* fout = fopen(output_path, "w");
+	if (!fout) {
+		printf("can't open %s!\n", output_path);
+		return 1;
+	}
 
-	//BallTree ball_tree2;
-	//ball_tree2.restoreTree(index_path);
-	//for (int i = 0; i < qn; i++) {
-	//	int index = ball_tree2.mipSearch(d, query[i]);
-	//	fprintf(fout, "%d\n", index);
-	//}
-	//fclose(fout);
+	BallTree ball_tree2;
+	ball_tree2.restoreTree(index_path);
+	for (int i = 0; i < qn; i++) {
+		int index = ball_tree2.mipSearch(d, query[i]);
+		fprintf(fout, "%d\n", index);
+	}
+	fclose(fout);
 
-	//for (int i = 0; i < n; i++) {
-	//	delete[] data[i];
-	//}
+	for (int i = 0; i < n; i++) {
+		delete[] data[i];
+	}
 
-	//for (int i = 0; i < qn; i++) {
-	//	delete[] query[i];
-	//}
+	for (int i = 0; i < qn; i++) {
+		delete[] query[i];
+	}
 
 	return 0;
 }

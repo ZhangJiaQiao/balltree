@@ -10,6 +10,9 @@ private:
     int INDEX_SLOTSIZE;
     int DATA_SLOTSIZE;
 
+    int curPageID;   //记录当前节点应该存在哪页
+    int curSlotID;   //记录单签节点应该存在哪槽
+
     ballTreeNode *root;
     int dimension;
     int numIndexSlot;
@@ -34,10 +37,19 @@ public:
 
 	bool storeTree(const char* index_path);
 
-	//bool restoreTree(const char* index_path);
+//-----------------------ZJQ:20170521任务3与4实现-----------------------//
+	bool restoreTree(const char* index_path);
 	
-	//int mipSearch(int d, float* query);
+	int mipSearch(int d, float* query);
 
+    void LinearSearch(float query, ballTreeNode *node, Mip& mip);
+
+    float computeInnerProduct(int d, float* query, float* data);
+
+    float MIP(int d, float* query, ballTreeNode* node);
+
+    ballTreeNode* getNode(int pageID, int slotID);
+//----------------------------------------------------------------------//
 	// optional
 	//bool insertData(int d, float* data);
 
