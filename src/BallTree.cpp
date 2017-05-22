@@ -4,15 +4,13 @@
 
 #include "BallTree.h"
 
-const int DATA_INT_SIZE = 5;
-const int INDEX_INT_SIZE = 2;
-
 BallTree::BallTree() {
+    INDEX_SLOTSIZE = DATA_SLOTSIZE = 0;
+    curIndexRid = curDataRid = Rid();
     root = NULL;
     dimension = 0;
     numIndexSlot = 0;
     numDataSlot = 0;
-    id = 0;
 }
 
 BallTree::~BallTree() {
@@ -20,16 +18,14 @@ BallTree::~BallTree() {
 }
 
 bool BallTree::buildTree(int n, int d, float **data) {
+    /* Initialize some values at buiding time. */
     dimension = d;
-    DATA_SLOTSIZE = sizeof(int) * DATA_INT_SIZE + sizeof(float) * dimension * N0 + sizeof(bool) * 2;
     INDEX_SLOTSIZE = sizeof(int) * INDEX_INT_SIZE + sizeof(float) * (dimension + 1) + sizeof(bool) * 2;
+    DATA_SLOTSIZE = sizeof(int) * DATA_INT_SIZE + sizeof(float) * dimension * N0;
     numIndexSlot = floor(PAGE_SIZE / INDEX_SLOTSIZE);
     numDataSlot = floor(PAGE_SIZE / DATA_SLOTSIZE);
 
-    curPageID = 0; //根节点页号槽号默认为(0,0)，剩下节点从(0,1)开始
-    curSlotID = 1;
-    //int fatherId = -1;
-    buildBall(root, n, d, data, false, false);
+    buildBall(root, n, d, data);
 
     for (int i = 0; i < n; i++)
         delete[] data[i];
@@ -39,18 +35,10 @@ bool BallTree::buildTree(int n, int d, float **data) {
     return true;
 }
 
-void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, bool isLeftLeaf, bool isRightLeaf) {
-    if (curSlotID >= numIndexSlot) {
-        curPageID++;
-    }
-
+void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data) {
     float *mean = computeMean(n, d, data);
     node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
-    //node->id = id++;
-    //node->fatherId = fatherId;
-    //node->isLeft = isLeft;
 
-    node->leftPageID
     delete[] mean;
 
     if (n <= N0) {
@@ -60,11 +48,8 @@ void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, bool i
             node->table[i] = new float[d];
             memcpy(node->table[i], data[i], d * sizeof(float));
         }
-        printf("Tree node Data Entry %d built.\n", node->id);
         return;
     }
-
-    printf("Tree node index Entry %d built.\n", node->id);
 
     float *A, *B;
     MakeBallTreeSplit(n, d, data, A, B);
@@ -81,8 +66,10 @@ void BallTree::buildBall(ballTreeNode *&node, int n, int d, float **data, bool i
 
     float **leftData_ = parseFloatArr(leftData);
     float **rightData_ = parseFloatArr(rightData);
-    buildBall(node->left, leftData.size(), d, leftData_, node->id, true);
-    buildBall(node->right, rightData.size(), d, rightData_, node->id, false);
+    node->isLeftLeaf = leftData.size() <= N0;
+    node->isRightLeaf = rightData.size() <= N0;
+    buildBall(node->left, leftData.size(), d, leftData_);
+    buildBall(node->right, rightData.size(), d, rightData_);
     delete[] leftData_;
     delete[] rightData_;
 }
@@ -97,37 +84,48 @@ bool BallTree::storeTree(const char *index_path) {
     if (!indexOutput || !dataOutput)
         return false;
 
-    std::streampos indexPtr = 0, dataPtr = 0;
-    preorderStore(root, indexOutput, dataOutput, indexPtr, dataPtr);
+    curIndexRid = curDataRid = Rid(0, 0);
+    preorderStore(root, NULL, indexOutput, dataOutput, false);
     indexOutput.close();
     dataOutput.close();
     return true;
 }
 
-void BallTree::preorderStore(ballTreeNode *node, std::ofstream &indexOutput, std::ofstream &dataOutput, std::streampos &indexPtr, std::streampos &dataPtr) {
+void BallTree::preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
+    std::ofstream &dataOutput, bool isLeft) {
     if (node == NULL)
         return;
-    if (node->table == NULL)
-        storeIndexNode(node, indexOutput, indexPtr);
-    else
-        storeDataNode(node, dataOutput, dataPtr);
+    if (node->table == NULL) {
+        if (father != NULL) {
+            if (isLeft) father->leftRid = curIndexRid;
+            else father->rightRid = curIndexRid;
+        }
+        storeIndexNode(node, indexOutput, curIndexRid);
+        curIndexRid.pageid = curIndexRid.slotid == numIndexSlot - 1 ? curIndexRid.pageid + 1 : curIndexRid.pageid;
+        curIndexRid.slotid = curIndexRid.slotid == numIndexSlot - 1 ? 0 : curIndexRid.slotid + 1;
+    } else {
+        if (father != NULL) {
+            if (isLeft) father->leftRid = curDataRid;
+            else father->rightRid = curDataRid;
+        }
+        curDataRid.pageid = curDataRid.slotid == numDataSlot - 1 ? curDataRid.pageid + 1 : curDataRid.pageid;
+        curDataRid.slotid = curDataRid.slotid == numDataSlot - 1 ? 0 : curDataRid.slotid + 1;
+        storeDataNode(node, dataOutput, curDataRid);
+    }
 
-    printf("Tree node %d stored.\n", node->id);
-
-    preorderStore(node->left, indexOutput, dataOutput, indexPtr, dataPtr);
-    preorderStore(node->right, indexOutput, dataOutput, indexPtr, dataPtr);
+    preorderStore(node->left, node, indexOutput, dataOutput, true);
+    preorderStore(node->right, node, indexOutput, dataOutput, false);
 }
 
-void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr) {
-    int pageid = parsePageId(filePtr);
-    int slotid = parseSlotId(filePtr, INDEX_SLOTSIZE, numIndexSlot);
+void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid) {
+    int pageid = rid.pageid;
+    int slotid = rid.slotid;
 
     if (slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(filePtr);
+        output.seekp(PAGE_SIZE * pageid);
         bool *bitMap = new bool[numIndexSlot];
         memset(bitMap, 0, numIndexSlot);
         output.write((char*)bitMap, numIndexSlot);
-        filePtr = output.tellp();
         delete[] bitMap;
     }
     output.seekp(pageid * PAGE_SIZE + slotid);
@@ -136,36 +134,33 @@ void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, std::st
 
     output.seekp(pageid * PAGE_SIZE + slotid * INDEX_SLOTSIZE + numIndexSlot);
     float *floatArr = new float[dimension + 1];
-    int *intArr = new int[3];
-    intArr[0] = node->id;
-    intArr[1] = node->fatherId;
-    intArr[2] = dimension;
+    int *intArr = new int[INDEX_INT_SIZE];
+    intArr[0] = node->leftRid.pageid;
+    intArr[1] = node->leftRid.slotid;
+    intArr[2] = node->rightRid.pageid;
+    intArr[3] = node->rightRid.slotid;
     floatArr[0] = node->radius;
     memcpy(floatArr + 1, node->mean, dimension * sizeof(float));
-    bool isLeft = node->isLeft;
-    output.write((char*)intArr, 3 * sizeof(int));
+    bool *boolArr = new bool[2];
+    boolArr[0] = node->isLeftLeaf;
+    boolArr[1] = node->isRightLeaf;
+    output.write((char*)intArr, INDEX_INT_SIZE * sizeof(int));
     output.write((char*)floatArr, (dimension + 1) * sizeof(float));
-    output.write((char*)&isLeft, sizeof(bool));
-    filePtr = output.tellp();
-
-    if (slotid == numIndexSlot - 1) {
-        filePtr = (pageid + 1) * PAGE_SIZE;
-    }
+    output.write((char*)boolArr, INDEX_BOOL_SIZE * sizeof(bool));
 
     delete[] floatArr;
     delete[] intArr;
 }
 
-void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr) {
-    int pageid = parsePageId(filePtr);
-    int slotid = parseSlotId(filePtr, DATA_SLOTSIZE, numDataSlot);
+void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid) {
+    int pageid = rid.pageid;
+    int slotid = rid.slotid;
 
     if (slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(filePtr);
+        output.seekp(PAGE_SIZE * pageid);
         bool *bitMap = new bool[numDataSlot];
         memset(bitMap, 0, numDataSlot);
         output.write((char*)bitMap, numDataSlot);
-        filePtr = output.tellp();
         delete[] bitMap;
     }
     output.seekp(pageid * PAGE_SIZE + slotid);
@@ -173,24 +168,13 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, std::str
     output.write((char*)&a, sizeof(bool));
 
     output.seekp(pageid * PAGE_SIZE + slotid * DATA_SLOTSIZE + numDataSlot);
-    int *intArr = new int[3];
+    int numTuples = node->tableSize;
     float *floatArr = new float[dimension * node->tableSize];
-    intArr[0] = node->id;
-    intArr[1] = node->fatherId;
-    intArr[2] = node->tableSize;
     for (int i = 0; i < node->tableSize; i++)
         memcpy(floatArr + i * dimension, node->table[i], dimension * sizeof(float));
-    bool isLeft = node->isLeft;
-    output.write((char*)intArr, 3 * sizeof(int));
+    output.write((char*)&numTuples, sizeof(int));
     output.write((char*)floatArr, dimension * node->tableSize * sizeof(float));
-    output.write((char*)&isLeft, sizeof(bool));
-    filePtr = pageid * PAGE_SIZE + numDataSlot + DATA_SLOTSIZE * (slotid + 1);
 
-    if (slotid == numDataSlot - 1) {
-        filePtr = (pageid + 1) * PAGE_SIZE;
-    }
-
-    delete[] intArr;
     delete[] floatArr;
 }
 

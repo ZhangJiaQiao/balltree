@@ -4,6 +4,10 @@
 #define L 256
 #define PAGE_SIZE 65536
 
+const int INDEX_INT_SIZE = 4;
+const int INDEX_BOOL_SIZE = 2;
+const int DATA_INT_SIZE = 1;
+
 struct Rid {
     int pageid;
     int slotid;
@@ -20,11 +24,10 @@ struct Rid {
 struct ballTreeNode {
     float radius;  //球的半径
     float *mean;  //球的圆心
+    
+    Rid leftRid;  //  The rid of the left child.
+    Rid rightRid;  //  The rid of the right child.
 
-    int leftPageID;  //左节点页号
-    int leftSlotID;  //左节点槽号
-    int rightPageID;  //右节点页号
-    int rightSlotID;  //右节点槽号
     bool isLeftLeaf;  //左节点是否为叶子
     bool isRightLeaf;  //右节点是否为叶子
     

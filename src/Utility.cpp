@@ -11,21 +11,21 @@ using namespace std;
 ballTreeNode::ballTreeNode() {
     radius = 0;
     mean = NULL;
-    left = right = NULL;
-    id = fatherId = -1;
-    isLeft = false;
+    leftRid = rightRid = Rid();
+    isLeftLeaf = isRightLeaf = false;
     table = NULL;
     tableSize = 0;
+    left = right = NULL;
 }
 ballTreeNode::ballTreeNode(float r, float* m, int d) {
     radius = r;
     mean = new float[d];
     memcpy(mean, m, d * sizeof(float));
-    left = right = NULL;
-    id = fatherId = -1;
-    isLeft = false;
+    leftRid = rightRid = Rid();
+    isLeftLeaf = isRightLeaf = false;
     table = NULL;
     tableSize = 0;
+    left = right = NULL;
 }
 
 bool read_data(int n, int d, float** &data, const char* file_name) {

@@ -10,25 +10,24 @@ private:
     int INDEX_SLOTSIZE;
     int DATA_SLOTSIZE;
 
-    int curPageID;   //记录当前节点应该存在哪页
-    int curSlotID;   //记录单签节点应该存在哪槽
+    Rid curIndexRid;    //  Current rid of the non-leaf node.
+    Rid curDataRid;    //  Current rid of the leaf node.
 
     ballTreeNode *root;
     int dimension;
     int numIndexSlot;
     int numDataSlot;
-    int id;
 
     float *computeMean(int n, int d, float **data);
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeNode *&node, int n, int d, float **data, int fatherId, bool isLeft);
+    void buildBall(ballTreeNode *&node, int n, int d, float **data);
 
-    void preorderStore(ballTreeNode *node, std::ofstream &indexOutput, 
-        std::ofstream &dataOutput, std::streampos &indexPtr, std::streampos &dataPtr);
-    void storeIndexNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr);
-    void storeDataNode(ballTreeNode *node, std::ofstream &output, std::streampos &filePtr);
+    void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
+        std::ofstream &dataOutput, bool isLeft);
+    void storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
+    void storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
 public:
 	BallTree();
 	~BallTree();
