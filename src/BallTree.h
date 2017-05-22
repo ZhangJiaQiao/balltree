@@ -28,6 +28,8 @@ private:
         std::ofstream &dataOutput, bool isLeft);
     void storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
     void storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
+    
+    void TreeSearch(float *query, ballTreeNode *node, Mip &mip);
 public:
 	BallTree();
 	~BallTree();
@@ -41,11 +43,11 @@ public:
 	
 	int mipSearch(int d, float* query);
 
-    void LinearSearch(float query, ballTreeNode *node, Mip& mip);
+    void LinearSearch(float *query, ballTreeNode *node, Mip& mip);
 
-    float computeInnerProduct(int d, float* query, float* data);
+    float computeInnerProduct(float* query, float* data);
 
-    float MIP(int d, float* query, ballTreeNode* node);
+    float MIP(float* query, ballTreeNode* node);
 
     ballTreeNode* getNode(int pageID, int slotID);
 //----------------------------------------------------------------------//

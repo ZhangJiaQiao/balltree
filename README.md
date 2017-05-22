@@ -45,8 +45,8 @@ Yahoo! Music | 624,961 | 300 | 1000 | 64KB | 2.3GB
 
 Leaf Node
 
-{ int(id), int(fatherid), int(dimension), float\[dimension\](mean), float(radius), bool(isLeft) }
+{ int\[4\](leftRid and rightRid), float\[dimension\](mean), float(radius), bool\[2\](isLeftChild, isRightChild) }
 
 Non-Leaf Node
 
-{ int(id), int(fatherid), int(k) float\[k\]\[dimension\](k tuples), bool(isLeft) }
+{ int(k) float\[N0\]\[dimension\](k tuples) }

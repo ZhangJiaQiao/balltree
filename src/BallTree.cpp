@@ -1,6 +1,7 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include <cstdio>
 
 #include "BallTree.h"
 
@@ -30,8 +31,10 @@ bool BallTree::buildTree(int n, int d, float **data) {
     for (int i = 0; i < n; i++)
         delete[] data[i];
     delete[] data;
+
     if (root == NULL)
         return false;
+
     return true;
 }
 
@@ -84,10 +87,17 @@ bool BallTree::storeTree(const char *index_path) {
     if (!indexOutput || !dataOutput)
         return false;
 
+    /* Store some metadata */
+    indexOutput.write((char*)&INDEX_SLOTSIZE, sizeof(int));
+    indexOutput.write((char*)&dimension, sizeof(int));
+    dataOutput.write((char*)DATA_SLOTSIZE, sizeof(int));
+
+    /* Preorder store the nodes. */
     curIndexRid = curDataRid = Rid(0, 0);
     preorderStore(root, NULL, indexOutput, dataOutput, false);
     indexOutput.close();
     dataOutput.close();
+
     return true;
 }
 
@@ -122,17 +132,17 @@ void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &ri
     int slotid = rid.slotid;
 
     if (slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(PAGE_SIZE * pageid);
+        output.seekp(METADATA_INDEX_OFFSET + PAGE_SIZE * pageid);
         bool *bitMap = new bool[numIndexSlot];
         memset(bitMap, 0, numIndexSlot);
         output.write((char*)bitMap, numIndexSlot);
         delete[] bitMap;
     }
-    output.seekp(pageid * PAGE_SIZE + slotid);
+    output.seekp(METADATA_INDEX_OFFSET + pageid * PAGE_SIZE + slotid);
     bool a = true;
     output.write((char*)&a, sizeof(bool));
 
-    output.seekp(pageid * PAGE_SIZE + slotid * INDEX_SLOTSIZE + numIndexSlot);
+    output.seekp(METADATA_INDEX_OFFSET + pageid * PAGE_SIZE + slotid * INDEX_SLOTSIZE + numIndexSlot);
     float *floatArr = new float[dimension + 1];
     int *intArr = new int[INDEX_INT_SIZE];
     intArr[0] = node->leftRid.pageid;
@@ -157,17 +167,17 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid
     int slotid = rid.slotid;
 
     if (slotid == 0) {    // bitMap needs to be inserted.
-        output.seekp(PAGE_SIZE * pageid);
+        output.seekp(METADATA_DATA_OFFSET + PAGE_SIZE * pageid);
         bool *bitMap = new bool[numDataSlot];
         memset(bitMap, 0, numDataSlot);
         output.write((char*)bitMap, numDataSlot);
         delete[] bitMap;
     }
-    output.seekp(pageid * PAGE_SIZE + slotid);
+    output.seekp(METADATA_DATA_OFFSET + pageid * PAGE_SIZE + slotid);
     bool a = true;
     output.write((char*)&a, sizeof(bool));
 
-    output.seekp(pageid * PAGE_SIZE + slotid * DATA_SLOTSIZE + numDataSlot);
+    output.seekp(METADATA_DATA_OFFSET + pageid * PAGE_SIZE + slotid * DATA_SLOTSIZE + numDataSlot);
     int numTuples = node->tableSize;
     float *floatArr = new float[dimension * node->tableSize];
     for (int i = 0; i < node->tableSize; i++)
@@ -239,9 +249,9 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
 
 //-----------------------ZJQ:20170521任务3与4实现-----------------------//
 bool BallTree::restoreTree(const char* index_path) {
-    std::ifstream infile(index_path, ios::binary);
+    std::ifstream infile(index_path, std::ios::binary);
     if (!infile) {
-        cout << "open " << index_path << " failed!" << endl;
+        printf("open %s failed!", index_path);
         return false;
     }
     //--------------下面实现的代码为读取根节点的所有信息，树的维度，槽长以及槽数---------------//
@@ -258,17 +268,17 @@ int BallTree::mipSearch(int d, float* query) {
     mip.index = -1;
     //记录最大内积及目标序号
     TreeSearch(query, root, mip);
-    return mip.index；
+    return mip.index;
 }
 
 void BallTree::TreeSearch(float* query, ballTreeNode* node, Mip &mip) {
     if (mip.product < MIP(query, node)) {
         if (node->table == NULL) {
-            LinearSearch(query, node, mip)
+            LinearSearch(query, node, mip);
         }
         else {
-            node->left = getNode(node->leftPageID, node->leftSlotID);
-            node->right = getNode(node->rightPageID, node->rightSlotID);
+            node->left = getNode(node->leftRid.pageid, node->leftRid.slotid);
+            node->right = getNode(node->rightRid.pageid, node->rightRid.slotid);
             float leftProduct = MIP(query, node->left);
             float rightProduct = MIP(query, node->right);
             if (leftProduct < rightProduct) {

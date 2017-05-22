@@ -8,6 +8,9 @@ const int INDEX_INT_SIZE = 4;
 const int INDEX_BOOL_SIZE = 2;
 const int DATA_INT_SIZE = 1;
 
+const int METADATA_INDEX_OFFSET = sizeof(int) * 2;
+const int METADATA_DATA_OFFSET = sizeof(int);
+
 struct Rid {
     int pageid;
     int slotid;
