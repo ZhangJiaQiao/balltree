@@ -43,10 +43,10 @@ Yahoo! Music | 624,961 | 300 | 1000 | 64KB | 2.3GB
 
 ## Storage Format
 
-Leaf Node
+Non-Leaf Node
 
 { int\[4\](leftRid and rightRid), float\[dimension\](mean), float(radius), bool\[2\](isLeftChild, isRightChild) }
 
-Non-Leaf Node
+Leaf Node
 
-{ int(k) float\[N0\]\[dimension\](k tuples) }
+{ int(k), float\[dimension\](mean), float(radius), float\[N0\]\[dimension\](k tuples) }
