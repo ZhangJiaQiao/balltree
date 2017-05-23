@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <vector>
@@ -9,11 +9,11 @@
 #include "Utility.h"
 #include "BallTree.h"
 
-#define YAHOO
+#define MNIST
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 60000, d = 51;
+int n = 6000, d = 51;
 int qn = 1000;
 #endif
 
@@ -44,15 +44,21 @@ int main() {
 
     // Read Test for debugging.
     std::ifstream testData("Mnist/index/indexEntries.dat", std::ios::binary | std::ios::in);
-    testData.seekg(ball_tree1.getNumIndexSlot() + ball_tree1.getIndexSlotSize() * 2);
-    float floatArr[51];
-    int intArr[3];
-    bool isLeft;
-    testData.read((char*)intArr, sizeof(int) * 3);
-    testData.read((char*)floatArr, sizeof(float) * (d + 1));
-    testData.read((char*)&isLeft, sizeof(bool));
+    int slotsize, dimension;
+    testData.read((char*)&slotsize, sizeof(int));
+    testData.read((char*)&dimension, sizeof(int));
+    testData.seekg(METADATA_INDEX_OFFSET + ball_tree1.getNumIndexSlot());
+    float floatArr[52];
+    int intArr[4];
+    bool boolBuf[2];
+    testData.read((char*)intArr, sizeof(int) * 4);
+    testData.read((char*)floatArr, sizeof(float) * d);
+    testData.read((char*)boolBuf, sizeof(bool) * 2);
+    //
 
-	if (!read_data(qn, d, query, query_path));
+    if (!read_data(qn, d, query, query_path)) {
+        printf("Read query faild.\n");
+    }
 	FILE* fout = fopen(output_path, "w");
 	if (!fout) {
 		printf("can't open %s!\n", output_path);

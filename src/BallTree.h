@@ -1,4 +1,4 @@
-#ifndef __BALL_TREE_H
+﻿#ifndef __BALL_TREE_H
 #define __BALL_TREE_H
 
 #define N0 20
@@ -18,16 +18,21 @@ private:
     int numIndexSlot;
     int numDataSlot;
 
-    float *computeMean(int n, int d, float **data);
+    char *indexEntry_path;
+    char *dataEntry_path;
+
+    void computeMean(float *&mean, int n, int d, float **data);
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeNode *&node, int n, int d, float **data);
+    void buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool isLeft);
 
     void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
         std::ofstream &dataOutput, bool isLeft);
+    void bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput);
     void storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
     void storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
+    void updateRid(ballTreeNode *node, std::ofstream &output);
     
     void TreeSearch(float *query, ballTreeNode *node, Mip &mip);
 public:
@@ -49,7 +54,7 @@ public:
 
     float MIP(float* query, ballTreeNode* node);
 
-    ballTreeNode* getNode(int pageID, int slotID);
+    ballTreeNode* getNode(int pageID, int slotID, bool isIndex);
 //----------------------------------------------------------------------//
 	// optional
 	//bool insertData(int d, float* data);

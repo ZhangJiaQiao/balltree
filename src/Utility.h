@@ -1,4 +1,4 @@
-#ifndef __UTILITY_H
+﻿#ifndef __UTILITY_H
 #define __UTILITY_H
 
 #define L 256
@@ -27,18 +27,21 @@ struct Rid {
 struct ballTreeNode {
     float radius;  //球的半径
     float *mean;  //球的圆心
-    
+
+    Rid myRid;  //  The rid of this node.
     Rid leftRid;  //  The rid of the left child.
     Rid rightRid;  //  The rid of the right child.
 
     bool isLeftLeaf;  //左节点是否为叶子
     bool isRightLeaf;  //右节点是否为叶子
-    
+
     float **table;  //如果为叶子，table存数据
     int tableSize;  //table的大小
 
     ballTreeNode *left;  //左节点的索引
     ballTreeNode *right;  //右节点的索引
+    ballTreeNode *father;  //  pointer to father.
+    bool isLeft;  //  whether the node is a left node.
 
     ballTreeNode();
     ballTreeNode(float r, float* m, int d);
@@ -55,5 +58,5 @@ int parseSlotId(std::streampos filePtr, int slotsize, int numSlot);
 struct Mip {
     float product;
     int index;
-}
+};
 #endif
