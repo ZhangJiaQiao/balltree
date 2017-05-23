@@ -22,8 +22,8 @@ BallTree::~BallTree() {
 bool BallTree::buildTree(int n, int d, float **data) {
     /* Initialize some values at buiding time. */
     dimension = d;
-    INDEX_SLOTSIZE = sizeof(int) * INDEX_INT_SIZE + sizeof(float) * (dimension + 1) + sizeof(bool) * 2;
-    DATA_SLOTSIZE = sizeof(int) * DATA_INT_SIZE + sizeof(float) * dimension * N0;
+    INDEX_SLOTSIZE = sizeof(int) * INDEX_INT_SIZE + sizeof(float) * dimension + sizeof(bool) * 2;
+    DATA_SLOTSIZE = sizeof(int) * DATA_INT_SIZE + sizeof(float) * dimension * N0 + sizeof(float) * dimension;
     numIndexSlot = floor(PAGE_SIZE / (INDEX_SLOTSIZE + 1));
     numDataSlot = floor(PAGE_SIZE / (DATA_SLOTSIZE + 1));
 
@@ -218,9 +218,16 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid
     output.seekp(METADATA_DATA_OFFSET + pageid * PAGE_SIZE + slotid * DATA_SLOTSIZE + numDataSlot);
     int numTuples = node->tableSize;
     float *floatArr = new float[dimension * node->tableSize];
-    for (int i = 0; i < node->tableSize; i++)
-        memcpy(floatArr + i * dimension, node->table[i], dimension * sizeof(float));
+	float *mean = new float[dimension - 1];
+	float radius;
+	for (int i = 0; i < node->tableSize; i++) {
+		memcpy(floatArr + i * dimension, node->table[i], dimension * sizeof(float));
+	}
+	memcpy(mean, node->mean, (dimension - 1) * sizeof(float));
+	radius = node->radius;
     output.write((char*)&numTuples, sizeof(int));
+	output.write((char*)mean, (dimension - 1) * sizeof(float));
+	output.write((char*)&radius, sizeof(float));
     output.write((char*)floatArr, dimension * node->tableSize * sizeof(float));
 
     delete[] floatArr;
@@ -427,8 +434,17 @@ ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
         int intBuffer;
         input.read((char*)&intBuffer, sizeof(int));
         node->table = new float*[intBuffer];
+		node->mean = new float[dimension - 1];
         node->tableSize = intBuffer;
         float *floatBuffer = new float[dimension];
+		float *mean = new float[dimension - 1];
+		float radius;
+		input.read((char*)mean, sizeof(float) * dimension - 1);
+		input.read((char*)&radius, sizeof(float));
+
+		memcpy(node->mean, mean, sizeof(float) * (dimension - 1));
+		node->radius = radius;
+
         for (int i = 0; i < intBuffer; i++) {
             node->table[i] = new float[dimension];
             input.read((char*)floatBuffer, sizeof(float) * dimension);
