@@ -29,10 +29,6 @@ bool BallTree::buildTree(int n, int d, float **data) {
 
     buildBall(root, NULL, n, d, data, false);
 
-    for (int i = 0; i < n; i++)
-        delete[] data[i];
-    delete[] data;
-
     if (root == NULL)
         return false;
 
@@ -411,13 +407,13 @@ ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
     int slotsize = isIndex ? INDEX_SLOTSIZE : DATA_SLOTSIZE;
     input.seekg(offset + pageID * PAGE_SIZE + numSlot + slotsize * slotID);
     if (isIndex) {
-        int *intBuffer = new int[INDEX_INT_SIZE];
+        int intBuffer[INDEX_INT_SIZE];
         float *floatBuffer = new float[dimension];
-        bool *boolBuffer = new bool[INDEX_BOOL_SIZE];
+        bool boolBuffer[INDEX_BOOL_SIZE];
         input.read((char*)intBuffer, sizeof(int) * INDEX_INT_SIZE);
         input.read((char*)floatBuffer, sizeof(float) * (dimension));
         input.read((char*)boolBuffer, sizeof(bool) * INDEX_BOOL_SIZE);
-        float *mean = new float(dimension - 1);
+        float *mean = new float[dimension - 1];
         memcpy(mean, floatBuffer + 1, sizeof(float) * (dimension - 1));
         node->myRid = Rid(pageID, slotID);
         node->radius = floatBuffer[0];
@@ -427,9 +423,7 @@ ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
         node->isLeftLeaf = boolBuffer[0];
         node->isRightLeaf = boolBuffer[1];
         
-        delete[] intBuffer;
         delete[] floatBuffer;
-        delete[] boolBuffer;
     } else {
         int intBuffer;
         input.read((char*)&intBuffer, sizeof(int));
@@ -439,7 +433,7 @@ ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
         float *floatBuffer = new float[dimension];
 		float *mean = new float[dimension - 1];
 		float radius;
-		input.read((char*)mean, sizeof(float) * dimension - 1);
+		input.read((char*)mean, sizeof(float) * (dimension - 1));
 		input.read((char*)&radius, sizeof(float));
 
 		memcpy(node->mean, mean, sizeof(float) * (dimension - 1));
@@ -452,6 +446,7 @@ ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
         }
         node->myRid = Rid(pageID, slotID);
         delete[] floatBuffer;
+        delete[] mean;
     }
     return node;
 }

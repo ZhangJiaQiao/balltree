@@ -9,11 +9,11 @@
 #include "Utility.h"
 #include "BallTree.h"
 
-#define MNIST
+#define YAHOO
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 6000, d = 51;
+int n = 60000, d = 51;
 int qn = 1000;
 #endif
 
@@ -41,20 +41,6 @@ int main() {
 	BallTree ball_tree1;
 	ball_tree1.buildTree(n, d, data);
 	ball_tree1.storeTree(index_path);
-
-    // Read Test for debugging.
-    std::ifstream testData("Mnist/index/indexEntries.dat", std::ios::binary | std::ios::in);
-    int slotsize, dimension;
-    testData.read((char*)&slotsize, sizeof(int));
-    testData.read((char*)&dimension, sizeof(int));
-    testData.seekg(METADATA_INDEX_OFFSET + ball_tree1.getNumIndexSlot());
-    float floatArr[52];
-    int intArr[4];
-    bool boolBuf[2];
-    testData.read((char*)intArr, sizeof(int) * 4);
-    testData.read((char*)floatArr, sizeof(float) * d);
-    testData.read((char*)boolBuf, sizeof(bool) * 2);
-    //
 
     if (!read_data(qn, d, query, query_path)) {
         printf("Read query faild.\n");
