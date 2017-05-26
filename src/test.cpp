@@ -1,15 +1,15 @@
-﻿#include <iostream>
+//#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <vector>
 #include <fstream>
 #include <cmath>
-#include <fstream>
 
 #include "Utility.h"
 #include "BallTree.h"
 
-#define YAHOO
+#define MNIST
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
@@ -42,9 +42,9 @@ int main() {
 	ball_tree1.buildTree(n, d, data);
 	ball_tree1.storeTree(index_path);
 
-    if (!read_data(qn, d, query, query_path)) {
-        printf("Read query faild.\n");
-    }
+	if (!read_data(qn, d, query, query_path)) {
+		printf("Read query faild.\n");
+	}
 	FILE* fout = fopen(output_path, "w");
 	if (!fout) {
 		printf("can't open %s!\n", output_path);
@@ -67,5 +67,6 @@ int main() {
 		delete[] query[i];
 	}
 
+	//system("pause");
 	return 0;
 }

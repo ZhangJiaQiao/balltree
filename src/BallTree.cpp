@@ -1,11 +1,11 @@
-﻿#include <cmath>
+#include <cmath>
 #include <fstream>
 #include <vector>
 #include <queue>
 #include <cstdio>
+#include <cstring>
 
 #include "BallTree.h"
-
 BallTree::BallTree() {
     INDEX_SLOTSIZE = DATA_SLOTSIZE = 0;
     curIndexRid = curDataRid = Rid();
@@ -48,8 +48,9 @@ void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d
         node->table = new float*[n];
         node->tableSize = n;
         for (int i = 0; i < n; i++) {
-            node->table[i] = new float[d];
-            memcpy(node->table[i], data[i], d * sizeof(float));
+			node->table[i] = data[i];
+           // node->table[i] = new float[d];
+           // memcpy(node->table[i], data[i], d * sizeof(float));
         }
         return;
     }
@@ -94,11 +95,27 @@ bool BallTree::storeTree(const char *index_path) {
     /* Preorder store the nodes. */
     curIndexRid = curDataRid = Rid(0, 0);
     bfsStore(indexOutput, dataOutput);
+	//删除中间节点
+	deleteIndexNode();
     //preorderStore(root, NULL, indexOutput, dataOutput, false);
     indexOutput.close();
     dataOutput.close();
 
     return true;
+}
+
+//用于删除节点空间占用的内存
+bool BallTree::deleteIndexNode() {
+	preDeleteIndexNode(root);
+	return true;
+}
+
+void BallTree::preDeleteIndexNode(ballTreeNode* cur) {
+	if (cur->left != NULL) preDeleteIndexNode(cur->left);
+	if (cur->right != NULL) preDeleteIndexNode(cur->right);
+	if (cur->mean != NULL) delete[]cur->mean;
+	delete cur;
+	cur = NULL;
 }
 
 void BallTree::bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput) {
@@ -110,7 +127,7 @@ void BallTree::bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput) {
             if (cur->father != NULL) {
                 if (cur->isLeft) cur->father->leftRid = curIndexRid;
                 else cur->father->rightRid = curIndexRid;
-                updateRid(cur->father, indexOutput);
+                updateRid(cur->father, indexOutput);//更新父节点左右节点的rid
             }
             cur->myRid = curIndexRid;
             storeIndexNode(cur, indexOutput, curIndexRid);
@@ -120,10 +137,11 @@ void BallTree::bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput) {
             if (cur->father != NULL) {
                 if (cur->isLeft) cur->father->leftRid = curDataRid;
                 cur->father->rightRid = curDataRid;
-                updateRid(cur->father, indexOutput);
+                updateRid(cur->father, indexOutput);//更新父节点左右节点的rid
             }
             cur->myRid = curDataRid;
             storeDataNode(cur, dataOutput, curDataRid);
+			//cur->delete_memory();	//删除叶子节点上的table数据
             curDataRid.pageid = curDataRid.slotid == numDataSlot - 1 ? curDataRid.pageid + 1 : curDataRid.pageid;
             curDataRid.slotid = curDataRid.slotid == numDataSlot - 1 ? 0 : curDataRid.slotid + 1;
         }
@@ -225,7 +243,7 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid
 	output.write((char*)mean, (dimension - 1) * sizeof(float));
 	output.write((char*)&radius, sizeof(float));
     output.write((char*)floatArr, dimension * node->tableSize * sizeof(float));
-
+	delete[] mean;
     delete[] floatArr;
 }
 
@@ -325,45 +343,92 @@ bool BallTree::restoreTree(const char* index_path) {
 
     root = getNode(0, 0, true);
 
+	//add to debug
+	buildNode(root);
     return true;
+}
+void BallTree::buildNode(ballTreeNode* node) {
+	//if (node->table != NULL) return;
+	if (!node->isLeftLeaf) {
+		node->left = getNode(node->leftRid.pageid, node->leftRid.slotid, !(node->isLeftLeaf));
+		buildNode(node->left);
+	}
+	else node->left = NULL;
+	if (!node->isRightLeaf) {
+		node->right = getNode(node->rightRid.pageid, node->rightRid.slotid, !(node->isRightLeaf));
+		buildNode(node->right);
+	}
+	else node->right = NULL;
 }
 
 int BallTree::mipSearch(int d, float* query) {
-//论文的算法5
-    dimension = d;
+	//论文的算法5
+	dimension = d;
 
-    Mip mip;
-    mip.product = -1;
-    mip.index = -1;
-    //记录最大内积及目标序号
-    TreeSearch(query, root, mip);
-    return mip.index;
+	Mip mip;
+	mip.product = -1;
+	mip.index = -1;
+	//记录最大内积及目标序号
+	TreeSearch(query, root, mip);
+	return mip.index;
 }
-
 void BallTree::TreeSearch(float* query, ballTreeNode* node, Mip &mip) {
-//论文的算法4
-    if (mip.product < MIP(query, node)) {
-        if (node->table != NULL) {
-            LinearSearch(query, node, mip);
-        } else {
-            node->left = getNode(node->leftRid.pageid, node->leftRid.slotid, !(node->isLeftLeaf));
-            node->right = getNode(node->rightRid.pageid, node->rightRid.slotid, !(node->isRightLeaf));
-            float leftProduct = MIP(query, node->left);
-            float rightProduct = MIP(query, node->right);
-            if (leftProduct < rightProduct) {
-                TreeSearch(query, node->right, mip);
-                delete node->right;
-                TreeSearch(query, node->left, mip);
-                delete node->left;
-            } else {
-                TreeSearch(query, node->left, mip);
-                delete node->left;
-                TreeSearch(query, node->right, mip);
-                delete node->right;
-            }
-        }
-    }
+	if (node->table != NULL) {
+		LinearSearch(query, node, mip);
+	}
+	else {
+		if (node->isLeftLeaf)
+			node->left = getNode(node->leftRid.pageid, node->leftRid.slotid, !(node->isLeftLeaf));
+		if (node->isRightLeaf)
+			node->right = getNode(node->rightRid.pageid, node->rightRid.slotid, !(node->isRightLeaf));
+		float leftProduct = MIP(query, node->left);
+		float rightProduct = MIP(query, node->right);
+		if (leftProduct < rightProduct) {
+			if (mip.product < rightProduct) {
+				TreeSearch(query, node->right, mip);
+			}
+			if (node->isRightLeaf&&node->right!=NULL) {
+				node->right->delete_memory();
+				delete []node->right->mean;
+				delete node->right;
+				node->right = NULL;
+			}
+
+			if (mip.product < leftProduct) {
+				TreeSearch(query, node->left, mip);
+			}
+			if (node->isLeftLeaf&&node->left != NULL) {
+				node->left->delete_memory();
+				delete[]node->left->mean;
+				delete node->left;
+				node->left = NULL;
+			}
+		}
+		else {
+			if (mip.product < leftProduct) {
+				TreeSearch(query, node->left, mip);
+			}
+			if (node->isLeftLeaf&&node->left!=NULL) {
+				node->left->delete_memory();
+				delete[]node->left->mean;
+				delete node->left;
+				node->left = NULL;
+			}
+
+			if (mip.product < rightProduct&&node->right!=NULL) {
+				TreeSearch(query, node->right, mip);
+			}
+			if (node->isRightLeaf) {
+				node->right->delete_memory();
+				delete[]node->right->mean;
+				delete node->right;
+				node->right = NULL;
+			}
+		}
+
+	}
 }
+
 
 void BallTree::LinearSearch(float* query, ballTreeNode* node, Mip& mip) {
 //对存有数据的叶子节点进行线性查找
@@ -381,7 +446,7 @@ float BallTree::computeInnerProduct(float* query, float* data) {
 //计算内积
     float product = 0;
     for (int i = 0; i < dimension - 1; i++) {
-        product += query[i] * data[i + 1];
+        product += query[i+1] * data[i + 1];
     }
     return product;
 }
@@ -389,10 +454,12 @@ float BallTree::computeInnerProduct(float* query, float* data) {
 float BallTree::MIP(float *query, ballTreeNode* node) {
 //估算球的上界与query的内积
     float product = 0;
+	float radiusQuery = 0;
     for (int i = 0; i < dimension - 1; i++) {
-        product += query[i] * node->mean[i];
+        product += query[i+1] * node->mean[i];
+		radiusQuery += query[i+1] * query[i+1];
     }
-    product += node->radius;
+    product += node->radius*sqrt(radiusQuery);
     return product;
 }
 

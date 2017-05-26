@@ -1,4 +1,4 @@
-﻿#ifndef __UTILITY_H
+#ifndef __UTILITY_H
 #define __UTILITY_H
 
 #define L 256
@@ -45,6 +45,15 @@ struct ballTreeNode {
 
     ballTreeNode();
     ballTreeNode(float r, float* m, int d);
+	void delete_memory() {
+		if (table != NULL) {
+			for (int i = 0; i < tableSize; i++) {
+				delete[] table[i];
+			}
+			delete[] table;
+			table = NULL;
+		}
+	}
 };
 
 bool read_data(int n, int d, float** &data, const char* file_name);

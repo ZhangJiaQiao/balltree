@@ -1,4 +1,4 @@
-﻿#ifndef __BALL_TREE_H
+#ifndef __BALL_TREE_H
 #define __BALL_TREE_H
 
 #define N0 20
@@ -30,11 +30,13 @@ private:
     void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
         std::ofstream &dataOutput, bool isLeft);
     void bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput);
+	void preDeleteIndexNode(ballTreeNode* cur);
     void storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
     void storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
     void updateRid(ballTreeNode *node, std::ofstream &output);
     
-    void TreeSearch(float *query, ballTreeNode *node, Mip &mip);
+	void TreeSearch(float *query, ballTreeNode *node, Mip &mip);
+	void buildNode(ballTreeNode *node);
 public:
 	BallTree();
 	~BallTree();
@@ -42,6 +44,8 @@ public:
 	bool buildTree(int n, int d, float** data);
 
 	bool storeTree(const char* index_path);
+
+	bool deleteIndexNode();
 
 //-----------------------ZJQ:20170521任务3与4实现-----------------------//
 	bool restoreTree(const char* index_path);
