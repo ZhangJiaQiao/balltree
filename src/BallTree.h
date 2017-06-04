@@ -25,7 +25,7 @@ private:
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool isLeft);
+    void buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int &d, float **&data, bool isLeft);
 
     void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
         std::ofstream &dataOutput, bool isLeft);

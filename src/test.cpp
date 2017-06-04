@@ -1,4 +1,4 @@
-//#define _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -38,13 +38,21 @@ int main() {
 		return 1;
 	}
 
+	printf("read data finished\n");
+	system("pause");
 	BallTree ball_tree1;
 	ball_tree1.buildTree(n, d, data);
+	printf("buildTree finished\n");
+	system("pause");
 	ball_tree1.storeTree(index_path);
+	printf("storeTree finished\n");
+	system("pause");
 
 	if (!read_data(qn, d, query, query_path)) {
 		printf("Read query faild.\n");
 	}
+	printf("read query finished\n");
+	system("pause");
 	FILE* fout = fopen(output_path, "w");
 	if (!fout) {
 		printf("can't open %s!\n", output_path);
@@ -53,11 +61,16 @@ int main() {
 
 	BallTree ball_tree2;
 	ball_tree2.restoreTree(index_path);
+	printf("restoreTree finished\n");
+	system("pause");
 	for (int i = 0; i < qn; i++) {
 		int index = ball_tree2.mipSearch(d, query[i]);
+		printf("In query %d, %d found.\n", i+1, index);
 		fprintf(fout, "%d\n", index);
 	}
 	fclose(fout);
+	printf("MIP search finished\n");
+	system("pause");
 
 	for (int i = 0; i < n; i++) {
 		delete[] data[i];
@@ -67,6 +80,6 @@ int main() {
 		delete[] query[i];
 	}
 
-	//system("pause");
+	system("pause");
 	return 0;
 }

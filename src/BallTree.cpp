@@ -34,8 +34,8 @@ bool BallTree::buildTree(int n, int d, float **data) {
 
     return true;
 }
-
-void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool isLeft) {
+int leaf_num = 0;
+void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int &d, float **&data, bool isLeft) {
     float *mean = new float[d - 1];
     computeMean(mean, n, d, data);
     node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
@@ -52,6 +52,9 @@ void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d
            // node->table[i] = new float[d];
            // memcpy(node->table[i], data[i], d * sizeof(float));
         }
+		if(father != NULL) delete[]data;
+		leaf_num++;
+		printf("Make %d leaf nodes.\n", leaf_num);
         return;
     }
 
@@ -66,15 +69,22 @@ void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d
             rightData.push_back(data[i]);
         }
     }
+	if (father!=NULL) delete[]data;
 
+	int leftn = leftData.size();
+	int rightn = rightData.size();
+	//释放vector里的内存
     float **leftData_ = parseFloatArr(leftData);
+	leftData.swap(std::vector<float*>());
     float **rightData_ = parseFloatArr(rightData);
-    node->isLeftLeaf = leftData.size() <= N0;
-    node->isRightLeaf = rightData.size() <= N0;
-    buildBall(node->left, node, leftData.size(), d, leftData_, true);
-    buildBall(node->right, node, rightData.size(), d, rightData_, false);
-    delete[] leftData_;
-    delete[] rightData_;
+	rightData.swap(std::vector<float*>());
+
+    node->isLeftLeaf = leftn <= N0;
+    node->isRightLeaf = rightn<= N0;
+    buildBall(node->left, node, leftn, d, leftData_, true);
+	//delete[] leftData_;
+    buildBall(node->right, node, rightn, d, rightData_, false);
+    //delete[] rightData_;
 }
 
 bool BallTree::storeTree(const char *index_path) {
@@ -213,7 +223,7 @@ void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &ri
     delete[] floatArr;
     delete[] intArr;
 }
-
+int dataNode_num = 0;
 void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid) {
     int pageid = rid.pageid;
     int slotid = rid.slotid;
@@ -245,6 +255,8 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid
     output.write((char*)floatArr, dimension * node->tableSize * sizeof(float));
 	delete[] mean;
     delete[] floatArr;
+	dataNode_num++;
+	printf("Store %d leaf nodes\n", dataNode_num);
 }
 
 void BallTree::updateRid(ballTreeNode *node, std::ofstream &output) {
@@ -291,8 +303,8 @@ float BallTree::computeDistance(float *x, float *y) {
 }
 
 bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B) {
-    float *pick = data[0];
-    A = data[0];
+	float *pick = data[n/2];
+    A = pick;
     float maxDistance = 0;
     for (int i = 0; i < n; i++) {
         float curDistance = computeDistance(pick, data[i]);
