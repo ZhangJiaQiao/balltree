@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstring>
 #include <cmath>
 #include <algorithm>
 #include <vector>

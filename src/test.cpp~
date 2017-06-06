@@ -12,14 +12,14 @@
 #define MNIST
 
 #ifdef MNIST
-char dataset[L] = "datasets/Mnist";
+char dataset[L] = "Mnist";
 int n = 60000, d = 51;
 int qn = 1000;
 #endif
 
-#ifdef NETFLIX
-char dataset[L] = "datasets/Netflix";
-int n = 17770, d = 51;
+#ifdef YAHOO
+char dataset[L] = "Yahoo";
+int n = 624961, d = 301;
 int qn = 1000;
 #endif
 
