@@ -13,7 +13,7 @@
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 60000, d = 51;
+int n = 10000, d = 51;
 int qn = 1000;
 #endif
 
@@ -64,9 +64,12 @@ int main() {
 	printf("restoreTree finished\n");
 	system("pause");
 	for (int i = 0; i < qn; i++) {
-		int index = ball_tree2.mipSearch(d, query[i]);
-		printf("In query %d, %d found.\n", i+1, index);
-		fprintf(fout, "%d\n", index);
+		Mip mip;
+		mip.product = -1;
+		mip.index = -1;
+		int index = ball_tree2.mipSearch(d, query[i], mip);
+		printf("In query %d, %d found with max inner product %f.\n", i+1, index, mip.product);
+		fprintf(fout, "%d %f\n", index, mip.product);
 	}
 	fclose(fout);
 	printf("MIP search finished\n");

@@ -50,7 +50,7 @@ public:
 //-----------------------ZJQ:20170521任务3与4实现-----------------------//
 	bool restoreTree(const char* index_path);
 	
-	int mipSearch(int d, float* query);
+	int mipSearch(int d, float* query, Mip &mip);
 
     void LinearSearch(float *query, ballTreeNode *node, Mip& mip);
 

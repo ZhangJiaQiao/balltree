@@ -373,13 +373,10 @@ void BallTree::buildNode(ballTreeNode* node) {
 	else node->right = NULL;
 }
 
-int BallTree::mipSearch(int d, float* query) {
+int BallTree::mipSearch(int d, float* query, Mip &mip) {
 	//论文的算法5
 	dimension = d;
 
-	Mip mip;
-	mip.product = -1;
-	mip.index = -1;
 	//记录最大内积及目标序号
 	TreeSearch(query, root, mip);
 	return mip.index;
