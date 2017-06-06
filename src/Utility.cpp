@@ -9,25 +9,25 @@
 using namespace std;
 
 ballTreeNode::ballTreeNode() {
-    radius = 0;
-    mean = NULL;
-    leftRid = rightRid = upRid = downRid = myRid = Rid();
-    isLeftLeaf = isRightLeaf = isUpLeaf = isDownLeaf = false;
+	radius = 0;
+	mean = NULL;
+	leftRid = rightRid = upRid = downRid = myRid = Rid();
+	isLeftLeaf = isRightLeaf = isUpLeaf = isDownLeaf = false;
 	isLeft = isRight = isUp = isDown = false;
-    table = NULL;
-    tableSize = 0;
-    left = right = up = down = father = NULL;
+	table = NULL;
+	tableSize = 0;
+	left = right = up = down = father = NULL;
 }
 ballTreeNode::ballTreeNode(float r, float* m, int d) {
-    radius = r;
-    mean = new float[d - 1];
-    memcpy(mean, m, (d - 1) * sizeof(float));
-    leftRid = rightRid = upRid = downRid = myRid= Rid();
-    isLeftLeaf = isRightLeaf = isUpLeaf = isDownLeaf=false;
+	radius = r;
+	mean = new float[d - 1];
+	memcpy(mean, m, (d - 1) * sizeof(float));
+	leftRid = rightRid = upRid = downRid = myRid = Rid();
+	isLeftLeaf = isRightLeaf = isUpLeaf = isDownLeaf = false;
 	isLeft = isRight = isUp = isDown = false;
-    table = NULL;
-    tableSize = 0;
-    left = right = up = down = father=NULL;
+	table = NULL;
+	tableSize = 0;
+	left = right = up = down = father = NULL;
 }
 
 bool read_data(int n, int d, float** &data, const char* file_name) {

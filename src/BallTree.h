@@ -7,6 +7,11 @@
 
 class BallTree {
 private:
+	bool ModelQuad;
+	int REAL_INDEX_INT_SIZE = INDEX_INT_SIZE;
+	int REAL_INDEX_BOOL_SIZE = INDEX_BOOL_SIZE;
+	int REAL_DATA_INT_SIZE = DATA_INT_SIZE;
+
     int INDEX_SLOTSIZE;
     int DATA_SLOTSIZE;
 
@@ -25,10 +30,10 @@ private:
     float computeRadius(int n, int d, float **data, float *mean);
     float computeDistance(float *x, float *y);
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
-    void buildBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool dir1, bool dir2);
-/*
+    void buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int &d, float **&data, bool isLeft);
+
     void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
-        std::ofstream &dataOutput, bool isLeft);*/
+        std::ofstream &dataOutput, bool isLeft);
     void bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput);
 	void preDeleteIndexNode(ballTreeNode* cur);
     void storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
@@ -67,7 +72,10 @@ public:
 	//bool deleteData(int d, float* data);
 
 	// optional
-	//bool buildQuadTree(int n, int d, float** data);
+	bool buildQuadTree(int n, int d, float** data);
+	void updateSize();
+	void buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool dir1, bool dir2);
+	void QuadTreeSearch(float* query, ballTreeNode* node, Mip &mip);
 
     int getNumIndexSlot() { return numIndexSlot; }
     int getNumDataSlot() { return numDataSlot; }

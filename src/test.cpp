@@ -13,7 +13,7 @@
 
 #ifdef MNIST
 char dataset[L] = "Mnist";
-int n = 10000, d = 51;
+int n = 1000, d = 51;
 int qn = 1000;
 #endif
 
@@ -41,7 +41,7 @@ int main() {
 	printf("read data finished\n");
 	system("pause");
 	BallTree ball_tree1;
-	ball_tree1.buildTree(n, d, data);
+	ball_tree1.buildQuadTree(n, d, data);
 	printf("buildTree finished\n");
 	system("pause");
 	ball_tree1.storeTree(index_path);
@@ -65,7 +65,7 @@ int main() {
 	system("pause");
 	for (int i = 0; i < qn; i++) {
 		int index = ball_tree2.mipSearch(d, query[i]);
-		printf("In query %d, %d found.\n", i + 1, index);
+		printf("In query %d, %d found.\n", i+1, index);
 		fprintf(fout, "%d\n", index);
 	}
 	fclose(fout);
