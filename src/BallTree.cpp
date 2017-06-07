@@ -20,10 +20,19 @@ BallTree::BallTree() {
 BallTree::~BallTree() {
 	;
 }
-
+/*
+ *buildTree
+ *@param: n, d, data
+ *@return: bool
+ *用于初始化建树参数等， 如dimension
+ *其中的REAL_DATA_INT_SIZE,REAL_INDEX_INT_SIZE,REAL_INDEX_BOOL_SIZE等
+ *都是用于转换而二叉树和四叉树不同文件存取的参数接口
+ *buildBall 是实际实现递归建树的函数
+ */
 bool BallTree::buildTree(int n, int d, float **data) {
 	/* Initialize some values at buiding time. */
 	ModelQuad = false;
+	//ModelQuad=false代表非四叉树模式
 	updateSize();
 	dimension = d;
 	INDEX_SLOTSIZE = sizeof(int) * REAL_INDEX_INT_SIZE + sizeof(float) * dimension + sizeof(bool) * REAL_INDEX_BOOL_SIZE;
@@ -38,6 +47,21 @@ bool BallTree::buildTree(int n, int d, float **data) {
 
 	return true;
 }
+/*
+ *buildBall
+ *@param: node, father, n, d, data, isLeft
+ *@return: void
+ *建树算法核心部分
+ *传入buildBall的data是上一个父节点的数据集
+ *其实在本次实验中并没有按照论文里的吧每个节点包含的数据存在该节点
+ *
+ *具体实现：
+ *传入节点的data，计算得到半径和圆心
+ *以半径圆心构建节点
+ *将data通过MakeBallTreeSplit计算获得两个点
+ *通过对两个点距离的比较将data分离得到两个集合
+ *再递归传入buildBall进行子节点的构建
+ */
 int leaf_num = 0;
 void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int &d, float **&data, bool isLeft) {
 	float *mean = new float[d - 1];
@@ -92,7 +116,21 @@ void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int 
 	buildBall(node->right, node, rightn, d, rightData_, false);
 	//delete[] rightData_;
 }
-
+/*
+ *storeTree
+ *@param: index_path
+ *
+ *存储节点数据
+ *分为两个部分存入两个二进制文件
+ *
+ *文件结构：元数据+多个页
+ *页结构：位图+多个槽
+ *
+ *打开两个输入流，存入文件的元数据，描述是否为四叉树模式以及文件槽大小
+ *通过bfsStore进行广度优先的顺序存储整个树的节点到文件中
+ *最后删除树留在内存中的节点
+ *
+ */
 bool BallTree::storeTree(const char *index_path) {
 	char indexEntryPath[L], dataEntryPath[L];
 	sprintf(indexEntryPath, "%s/indexEntries.dat", index_path);
@@ -127,7 +165,12 @@ bool BallTree::deleteIndexNode() {
 	preDeleteIndexNode(root);
 	return true;
 }
-
+/*
+ *preDeleteIndexNode
+ *@param: cur
+ *
+ *前序遍历删除节点
+ */
 void BallTree::preDeleteIndexNode(ballTreeNode* cur) {
 	if (cur->left != NULL) preDeleteIndexNode(cur->left);
 	if (cur->right != NULL) preDeleteIndexNode(cur->right);
@@ -142,6 +185,24 @@ void BallTree::preDeleteIndexNode(ballTreeNode* cur) {
 	cur = NULL;
 }
 
+/*
+ *bfsStore
+ *@param: indexOutput, dataOutput
+ *
+ *获得两个文件指针用于写入中间结点和叶子节点
+ *
+ *广度优先遍历各个节点
+ *通过curRid, curIndexRid, curDataRid实时赋予当前节点存入位置的Rid
+ *
+ *第一部分：中间节点index
+ *调用storeIndexNode()存储数据
+ *
+ *第二部分：叶子节点data
+ *调用storeDataNode()存储数据
+ *
+ *在对节点进行存储是需要对其父节点对应的存储位置的子节点的Rid进行更新：updateRid()
+ *
+ */
 void BallTree::bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput) {
 	std::queue<ballTreeNode*> bfs;
 	bfs.push(root);
@@ -202,33 +263,15 @@ void BallTree::bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput) {
 	}
 }
 
-void BallTree::preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput,
-	std::ofstream &dataOutput, bool isLeft) {
-	if (node == NULL)
-		return;
-	if (node->table == NULL) {
-		if (father != NULL) {
-			if (isLeft) father->leftRid = curIndexRid;
-			else father->rightRid = curIndexRid;
-		}
-		storeIndexNode(node, indexOutput, curIndexRid);
-		curIndexRid.pageid = curIndexRid.slotid == numIndexSlot - 1 ? curIndexRid.pageid + 1 : curIndexRid.pageid;
-		curIndexRid.slotid = curIndexRid.slotid == numIndexSlot - 1 ? 0 : curIndexRid.slotid + 1;
-	}
-	else {
-		if (father != NULL) {
-			if (isLeft) father->leftRid = curDataRid;
-			else father->rightRid = curDataRid;
-		}
-		curDataRid.pageid = curDataRid.slotid == numDataSlot - 1 ? curDataRid.pageid + 1 : curDataRid.pageid;
-		curDataRid.slotid = curDataRid.slotid == numDataSlot - 1 ? 0 : curDataRid.slotid + 1;
-		storeDataNode(node, dataOutput, curDataRid);
-	}
-
-	preorderStore(node->left, node, indexOutput, dataOutput, true);
-	preorderStore(node->right, node, indexOutput, dataOutput, false);
-}
-
+/*
+ *storeIndexNode
+ *@param： node， output， rid
+ *
+ *对于第一个槽的情况，先在开头存入该页的bitmap位图
+ *槽里存储节点的半径圆心+左右节点的页号和槽号+左右节点是否为叶子节点的标记
+ *当为四叉树时加入up， down节点的页号和槽号以及标记
+ *
+ */
 void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid) {
 	int pageid = rid.pageid;
 	int slotid = rid.slotid;
@@ -277,6 +320,13 @@ void BallTree::storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &ri
 	delete[] floatArr;
 	delete[] intArr;
 }
+/*
+ *storeDataNode
+ *@param: node, output, rid
+ *
+ *槽里存储叶子节点的半径圆心+元组大小+元组数据
+ *
+ */
 int dataNode_num = 0;
 void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid) {
 	int pageid = rid.pageid;
@@ -312,7 +362,14 @@ void BallTree::storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid
 	dataNode_num++;
 	printf("Store %d leaf nodes\n", dataNode_num);
 }
-
+/*
+ *updateRid
+ *@param: node, output
+ *
+ *写入当前节点对于从槽里的左右节点的rid
+ *当为四叉时则加入up， down节点的更新
+ *
+ */
 void BallTree::updateRid(ballTreeNode *node, std::ofstream &output) {
 	output.seekp(METADATA_INDEX_OFFSET + PAGE_SIZE * node->myRid.pageid + numIndexSlot + INDEX_SLOTSIZE * node->myRid.slotid);
 	int *buf=new int[REAL_INDEX_INT_SIZE];
@@ -331,7 +388,14 @@ void BallTree::updateRid(ballTreeNode *node, std::ofstream &output) {
 	output.write((char*)buf, sizeof(int) * REAL_INDEX_INT_SIZE);
 	delete[]buf;
 }
-
+/*
+ *computeMean
+ *@param: mean, n, d, data
+ *
+ *计算data数据里的平均值
+ *同时存储到mean里返回
+ *
+ */
 void BallTree::computeMean(float *&mean, int n, int d, float **data) {
 	for (int i = 1; i < d; i++) {
 		float tempSum = 0;
@@ -341,7 +405,15 @@ void BallTree::computeMean(float *&mean, int n, int d, float **data) {
 		mean[i - 1] = tempSum / n;
 	}
 }
-
+/*
+ *computeRadius
+ *@param： n, d, data, mean
+ *@return: max
+ *
+ *计算data中与mean最远的点的距离，作为半径
+ *返回半径值
+ *
+ */
 float BallTree::computeRadius(int n, int d, float **data, float *mean) {
 	float max = 0;
 	for (int i = 0; i < n; i++) {
@@ -357,14 +429,33 @@ float BallTree::computeRadius(int n, int d, float **data, float *mean) {
 	}
 	return max;
 }
-
+/*
+ *computeDistance
+ *@param: x, y
+ *@return: distance
+ *
+ *计算d维里x与y的距离
+ *返回距离值
+ *
+ *注：从1开始计算的原因是元组数据里第一个位置是index，即数据的下标
+ *因此需要忽略0号位置
+ *
+ */
 float BallTree::computeDistance(float *x, float *y) {
 	float squareSum = 0;
 	for (int i = 1; i < dimension; i++)
 		squareSum += (x[i] - y[i]) * (x[i] - y[i]);
 	return sqrt(squareSum);
 }
-
+/*
+ *MakeBallTreeSplit
+ *@param: n, d, data, A, B
+ *
+ *取data中间位置的点
+ *寻找其对应的最远的点记作A
+ *寻找A点对应最远的点记作B
+ *
+ */
 bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B) {
 	float *pick = data[n / 2];
 	A = pick;
@@ -389,6 +480,17 @@ bool BallTree::MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&
 }
 
 //-----------------------ZJQ:20170521任务3与4实现-----------------------//
+/*
+ *restoreTree
+ *@param: index_path
+ *
+ *重新从文件载入树
+ *这里先读取了元数据，获得槽大小以及相关信息
+ *再getNode函数获得根节点root
+ *root节点里有左右节点的rid以及是否为叶子节点的标记信息
+ *用于后面buildNode的递归构建树
+ *
+ */
 bool BallTree::restoreTree(const char* index_path) {
 	//restore()函数将树的根节点设置即可，一次找一个节点
 	indexEntry_path = new char[L];
@@ -425,6 +527,15 @@ bool BallTree::restoreTree(const char* index_path) {
 	buildNode(root);
 	return true;
 }
+/*
+ *buildNode
+ *@param： node
+ *
+ *前序遍历，结合getNode从文件里获取节点值
+ *对于叶子节点不获取，通过文件对树的重建只把树的中间节点载入内存
+ *而不是整棵树的所有数据，同时叶子节点具有的数据如果载入内存必定会对内存消耗巨大
+ *
+ */
 void BallTree::buildNode(ballTreeNode* node) {
 	//if (node->table != NULL) return;
 	if (!node->isLeftLeaf) {
@@ -450,7 +561,13 @@ void BallTree::buildNode(ballTreeNode* node) {
 		else node->down = NULL;
 	}
 }
-
+/*
+ *mipSearch
+ *@param：d， query
+ *
+ *调用QuadTreeSearch或者TreeSearch
+ *进行分支限界查找最大内积
+ */
 int BallTree::mipSearch(int d, float* query) {
 	//论文的算法5
 	dimension = d;
@@ -463,6 +580,21 @@ int BallTree::mipSearch(int d, float* query) {
 	else TreeSearch(query, root, mip);
 	return mip.index;
 }
+/*
+ *TreeSearch
+ *@param: query, node, mip
+ *
+ *当node为叶子节点时，调用LinearSearch进行叶子节点的线性遍历查找最大内积
+ *当为中间节点时，判断其左右节点是否为叶子节点，若是叶子节点则getNode将对应叶子节点的数据
+ *从内存读入
+ *
+ *再调用MIP计算左右节点的内积上限
+ *对MIP小的分支进行优先查找
+ *对于MIP小于当前最大内积的分支不予查找
+ *
+ *最后做好内存的控制，将node中的堆内存delete清空
+ *
+ */
 void BallTree::TreeSearch(float* query, ballTreeNode* node, Mip &mip) {
 	if (node->table != NULL) {
 		LinearSearch(query, node, mip);
@@ -520,7 +652,13 @@ void BallTree::TreeSearch(float* query, ballTreeNode* node, Mip &mip) {
 	}
 }
 
-
+/*
+ *LinearSearch
+ *@param: query, node, mip
+ *
+ *计算query与node节点中table里的元组进行内存计算
+ *同时比较当前最大内积mip，以更新mip最大内积值，以及对应元组index
+ */
 void BallTree::LinearSearch(float* query, ballTreeNode* node, Mip& mip) {
 	//对存有数据的叶子节点进行线性查找
 	for (int i = 0; i < node->tableSize; i++) {
@@ -532,7 +670,13 @@ void BallTree::LinearSearch(float* query, ballTreeNode* node, Mip& mip) {
 		}
 	}
 }
-
+/*
+ *computeInnerProduct
+ *@param: query, data
+ *@return: product
+ *
+ *计算query与data之间的内积并返回
+ */
 float BallTree::computeInnerProduct(float* query, float* data) {
 	//计算内积
 	float product = 0;
@@ -541,7 +685,17 @@ float BallTree::computeInnerProduct(float* query, float* data) {
 	}
 	return product;
 }
-
+/*
+ *MIP
+ *@param： query， node
+ *@return： product
+ *
+ *这里是算法的核心部分
+ *由于论文中证明了query与集合中元组内积最大上限的计算公式：
+ *MAX=query·mean+|query|*radius
+ *函数返回该上限
+ *
+ */
 float BallTree::MIP(float *query, ballTreeNode* node) {
 	//估算球的上界与query的内积
 	float product = 0;
@@ -554,7 +708,17 @@ float BallTree::MIP(float *query, ballTreeNode* node) {
 	return product;
 }
 
-
+/*
+ *getNode
+ *@param： pageID， slotID， isIndex
+ *@return： node
+ *
+ *这里是从index和data文件里重新载入节点的关键模块
+ *通过传入的页号和槽号计算偏移值，从而获得所需数据对应槽的位置
+ *
+ *通过isIndex判断节点是否为叶子节点，因为叶子节点和中间节点的存储格式以及文件不同
+ *
+ */
 ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
 	//根据页号和槽号获得节点数据
 	ballTreeNode* node = new ballTreeNode();
@@ -617,13 +781,29 @@ ballTreeNode* BallTree::getNode(int pageID, int slotID, bool isIndex) {
 	}
 	return node;
 }
-//quad ball tree
+//--------------------------------quad ball tree by zzy------------------------------
+/*
+ *updateSize
+ *
+ *由于四叉树和二叉树数据存取格式不同
+ *因此需要更新REAL_INDEX_INT_SIZE, REAL_INDEX_BOOL_SIZE, REAL_DATA_INT_SIZE
+ *确保二叉树和四叉树的正常转换
+ *
+ */
 void BallTree::updateSize() {
 	REAL_INDEX_INT_SIZE = (ModelQuad) ? QUAD_INDEX_INT_SIZE : INDEX_INT_SIZE;
 	REAL_INDEX_BOOL_SIZE = (ModelQuad) ? QUAD_INDEX_BOOL_SIZE : INDEX_BOOL_SIZE;
 	REAL_DATA_INT_SIZE = (ModelQuad) ? QUAD_DATA_INT_SIZE : DATA_INT_SIZE;
 
 }
+/*
+ *buildQuadTree
+ *@param: n, d, data
+ *
+ *四叉树构建
+ *ModelQuad=true代表树模式是四叉树
+ *同时调用updateSize()更新存取格式
+ */
 bool BallTree::buildQuadTree(int n, int d, float **data) {
 	ModelQuad = true;
 	updateSize();
@@ -640,7 +820,20 @@ bool BallTree::buildQuadTree(int n, int d, float **data) {
 
 	return true;
 }
-
+/*
+ *buildQuadBall
+ *@param node, father, n, d, data, dir1, dir2
+ *
+ *类似于buildBall
+ *构建节点信息半径圆心等
+ *对于data数量小于N0的进行叶子节点的构建
+ *
+ *不同的是传入dir1和dir2判断四个方向的节点位置
+ *同时调用MakeQuadBallTreeSplit的函数可以获取data里发布较为均匀的四个点
+ *再对data按四个点进行划分
+ *获得四个部分进行子节点的迭代
+ *
+ */
 void BallTree::buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool dir1, bool dir2) {
 
 	float *mean = new float[d - 1];
@@ -768,6 +961,19 @@ void BallTree::buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, i
 	buildQuadBall(node->up, node, upn, d, upData_, false, true);
 	buildQuadBall(node->down, node, downn, d, downData_, false, false);
 }
+/*
+ *QuadTreeSearch
+ *@param: query, node, mip
+ *
+ *类似于TreeSearch进行MIP求值
+ *
+ *由于按四个节点大小顺序安排访问顺序的实现较为复杂
+ *对于四个子节点所采取的优先决定搜索方式是：
+ *先判断left，right节点的大小比较，先按大小顺序访问left，right
+ *再按大小顺序访问up，down
+ *同时对于节点上限小于当前最大mip的情况不访问
+ *
+ */
 void BallTree::QuadTreeSearch(float* query, ballTreeNode* node, Mip &mip) {
 	if (node->table != NULL) {
 		LinearSearch(query, node, mip);
@@ -830,7 +1036,15 @@ void BallTree::QuadTreeSearch(float* query, ballTreeNode* node, Mip &mip) {
 
 	}
 }
-
+/*
+ *MakeQuadBallTreeSplit
+ *@param: n, d, data, A, B, C, D
+ *
+ *寻找离原点最近的点作为A
+ *再找离A点最远的两个点为B，C
+ *最后找B点最远的点D
+ *
+ */
 bool BallTree::MakeQuadBallTreeSplit(int n, int d, float **data, float *&A, float *&B, float *&C, float *&D){
 		A = data[0];
 		float *empty=new float[d];
