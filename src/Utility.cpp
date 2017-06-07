@@ -1,8 +1,9 @@
-#include <cstdio>
+	#include <cstdio>
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <fstream>
+#include<cstring>
 
 #include "Utility.h"
 
@@ -30,6 +31,47 @@ ballTreeNode::ballTreeNode(float r, float* m, int d) {
 	left = right = up = down = father = NULL;
 }
 
+void ballTreeNode::delete_memory() {
+	if (table != NULL) {
+		for (int i = 0; i < tableSize; i++) {
+			delete[] table[i];
+		}
+		delete[] table;
+		table = NULL;
+	}
+}
+void ballTreeNode::release_right() {
+	if (isRightLeaf&&right != NULL) {
+		right->delete_memory();
+		delete[]right->mean;
+		delete right;
+		right = NULL;
+	}
+}
+void ballTreeNode::release_left() {
+	if (isLeftLeaf&&left != NULL) {
+		left->delete_memory();
+		delete[]left->mean;
+		delete left;
+		left = NULL;
+	}
+}
+void ballTreeNode::release_up() {
+	if (isUpLeaf&&up != NULL) {
+		up->delete_memory();
+		delete[]up->mean;
+		delete up;
+		up = NULL;
+	}
+}
+void ballTreeNode::release_down() {
+	if (isDownLeaf&&down != NULL) {
+		down->delete_memory();
+		delete[]down->mean;
+		delete down;
+		down = NULL;
+	}
+}
 bool read_data(int n, int d, float** &data, const char* file_name) {
 	FILE* fin = fopen(file_name, "r");
 	if (!fin) {

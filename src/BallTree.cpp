@@ -4,6 +4,7 @@
 #include <queue>
 #include <cstdio>
 #include <cstring>
+#include<string.h>
 
 #include "BallTree.h"
 BallTree::BallTree() {
@@ -78,10 +79,11 @@ void BallTree::buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int 
 	int leftn = leftData.size();
 	int rightn = rightData.size();
 	//释放vector里的内存
+	std::vector<float*> empty;
 	float **leftData_ = parseFloatArr(leftData);
-	leftData.swap(std::vector<float*>());
+	leftData.swap(empty);
 	float **rightData_ = parseFloatArr(rightData);
-	rightData.swap(std::vector<float*>());
+	rightData.swap(empty);
 
 	node->isLeftLeaf = leftn <= N0;
 	node->isRightLeaf = rightn <= N0;
@@ -640,6 +642,7 @@ bool BallTree::buildQuadTree(int n, int d, float **data) {
 }
 
 void BallTree::buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool dir1, bool dir2) {
+
 	float *mean = new float[d - 1];
 	computeMean(mean, n, d, data);
 	node = new ballTreeNode(computeRadius(n, d, data, mean), mean, d);
@@ -675,31 +678,21 @@ void BallTree::buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, i
 	}
 
 	float *A, *B, *C, *D;
-	MakeBallTreeSplit(n, d, data, A, B);
-
+	std::vector<float*> empty;
 	std::vector<float*> leftData, rightData, upData, downData;
-	for (int i = 0; i < n; i++) {
-		if (computeDistance(data[i], A) <= computeDistance(data[i], B)) {
-			leftData.push_back(data[i]);
-		}
-		else {
-			rightData.push_back(data[i]);
-		}
-	}
+	MakeQuadBallTreeSplit(n, d, data, A, B, C, D);
 
-	int lsize = leftData.size();
-	int rsize = rightData.size();
-	float **leftData_ = parseFloatArr(leftData);
-	leftData.swap(std::vector<float*>());
-	float **rightData_ = parseFloatArr(rightData);
-	rightData.swap(std::vector<float*>());
-	MakeBallTreeSplit(lsize, d, leftData_, A, B);
-	MakeBallTreeSplit(rsize, d, rightData_, C, D);
-	delete[] leftData_;
-	delete[] rightData_;
-
+	leftData.push_back(A);
+	rightData.push_back(B);
+	upData.push_back(C);
+	downData.push_back(D);
 	for (int i = 0; i < n; i++) {
 		float ADist, BDist, CDist, DDist;
+		if (data[i]==A)	continue;
+		if (data[i]==B)	continue;
+		if (data[i]==C) continue;
+		if (data[i]==D) continue;
+
 		ADist = computeDistance(data[i], A);
 		BDist = computeDistance(data[i], B);
 		CDist = computeDistance(data[i], C);
@@ -755,14 +748,14 @@ void BallTree::buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, i
 	int rightn = rightData.size();
 	int upn = upData.size();
 	int downn = downData.size();
-	leftData_ = parseFloatArr(leftData);
-	leftData.swap(std::vector<float*>());
-	rightData_ = parseFloatArr(rightData);
-	rightData.swap(std::vector<float*>());
+	float **leftData_ = parseFloatArr(leftData);
+	leftData.swap(empty);
+	float **rightData_ = parseFloatArr(rightData);
+	rightData.swap(empty);
 	float **upData_ = parseFloatArr(upData);
-	upData.swap(std::vector<float*>());
+	upData.swap(empty);
 	float **downData_ = parseFloatArr(downData);
-	downData.swap(std::vector<float*>());
+	downData.swap(empty);
 
 
 
@@ -836,4 +829,39 @@ void BallTree::QuadTreeSearch(float* query, ballTreeNode* node, Mip &mip) {
 
 
 	}
+}
+
+bool BallTree::MakeQuadBallTreeSplit(int n, int d, float **data, float *&A, float *&B, float *&C, float *&D){
+		A = data[0];
+		float *empty=new float[d];
+		memset(empty, 0, d*sizeof(float));
+		float maxDistance = 0;
+		for (int i = 0; i < n; i++) {
+			float curDistance = computeDistance(empty, data[i]);
+			if (curDistance > maxDistance) {
+				maxDistance = curDistance;
+			  A = data[i];
+			}
+		}
+		maxDistance = 0;
+		B = data[n/2];
+		C = data[n/2];
+		for (int i = 0; i < n; i++) {
+			float curDistance = computeDistance(A, data[i]);
+			if (curDistance > maxDistance) {
+				maxDistance = curDistance;
+				C = B;
+				B = data[i];
+			}
+		}
+		maxDistance = 0;
+		for (int i = 0; i < n; i++) {
+			float curDistance = computeDistance(B, data[i]);
+			if (curDistance > maxDistance&&data[i]!=A&&data[i]!=C) {
+				maxDistance = curDistance;
+				D = data[i];
+			}
+		}
+		delete []empty;
+		return true;
 }

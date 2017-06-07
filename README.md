@@ -7,18 +7,22 @@ The idea is raised by a paper **Maximum Inner-Product Search Using Cone Trees**,
 
 This implementation is the outer-storage version. The ball trees are build in the memory and are written into binary files. When using the trees to find the maximum inner-product, just load the trees from the files page by page and then do the process work. The implementation is divided into several tasks.
 
+## Start
+
+Use `make` in the root directory to build the excution file.
+
+Then execute `bin/main` to launch the application in the root directory. 
+
+Note that you should always stay in the root directory, otherwise the relative paths won't work.
+
 ## Tasks
 
 1. Tree Building. --- Finished.
 2. Tree Storage. --- Finished.
-3. Tree Loading. --- 0%.
-4. Maximum Inner-product and Tree Trimming. --- 0%.
+3. Tree Loading. --- Finished.
+4. Maximum Inner-product and Tree Trimming. --- Finished.
 5. (optional) Tree insertion and deletion. --- 0%.
-6. (optional) Quadratic Ball Tree Implementation. --- 0%.
-
-### Current Status
-
-Tree Storage is finished. Memory costs a lot lmao.
+6. (optional) Quadratic Ball Tree Implementation. --- 90%.
 
 ### Tree Storage
 
@@ -34,18 +38,18 @@ Finish the queries with as little memory as possible and as fast as possible.
 
 ## Datasets
 
-Mnist (For debugging) and Yahoo! Music
+Mnist (For debugging) and Netflix
 
 Datasets | \#Objects | \#Dimension | \#Query | B | Data Size
 -------- | -------- | ---------- | ------ | - | ---------
 Mnist | 60,000 | 50 | 1000 | 64KB | 9.4MB
-Yahoo! Music | 624,961 | 300 | 1000 | 64KB | 2.3GB
+Netflix | 17770 | 50 | 1000 | 64KB | 8.5MB
 
 ## Storage Format
 
 Non-Leaf Node
 
-{ int\[4\](leftRid and rightRid), float\[dimension\](mean), float(radius), bool\[2\](isLeftChild, isRightChild) }
+{ int\[4\](leftRid and rightRid), float(radius), float\[dimension\](mean), bool\[2\](isLeftChild, isRightChild) }
 
 Leaf Node
 

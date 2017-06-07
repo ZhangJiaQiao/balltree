@@ -66,47 +66,11 @@ struct ballTreeNode {
 
 	ballTreeNode();
 	ballTreeNode(float r, float* m, int d);
-	void delete_memory() {
-		if (table != NULL) {
-			for (int i = 0; i < tableSize; i++) {
-				delete[] table[i];
-			}
-			delete[] table;
-			table = NULL;
-		}
-	}
-	void release_right() {
-		if (isRightLeaf&&right != NULL) {
-			right->delete_memory();
-			delete[]right->mean;
-			delete right;
-			right = NULL;
-		}
-	}
-	void release_left() {
-		if (isLeftLeaf&&left != NULL) {
-			left->delete_memory();
-			delete[]left->mean;
-			delete left;
-			left = NULL;
-		}
-	}
-	void release_up() {
-		if (isUpLeaf&&up != NULL) {
-			up->delete_memory();
-			delete[]up->mean;
-			delete up;
-			up = NULL;
-		}
-	}
-	void release_down() {
-		if (isDownLeaf&&down != NULL) {
-			down->delete_memory();
-			delete[]down->mean;
-			delete down;
-			down = NULL;
-		}
-	}
+	void delete_memory();
+	void release_right();
+	void release_left();
+	void release_up();
+	void release_down();
 };
 
 bool read_data(int n, int d, float** &data, const char* file_name);

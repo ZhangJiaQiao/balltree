@@ -32,14 +32,14 @@ private:
     bool MakeBallTreeSplit(int n, int d, float **data, float *&A, float *&B);
     void buildBall(ballTreeNode *&node, ballTreeNode *father, int &n, int &d, float **&data, bool isLeft);
 
-    void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput, 
+    void preorderStore(ballTreeNode *node, ballTreeNode *father, std::ofstream &indexOutput,
         std::ofstream &dataOutput, bool isLeft);
     void bfsStore(std::ofstream &indexOutput, std::ofstream &dataOutput);
-	void preDeleteIndexNode(ballTreeNode* cur);
+	  void preDeleteIndexNode(ballTreeNode* cur);
     void storeIndexNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
     void storeDataNode(ballTreeNode *node, std::ofstream &output, Rid &rid);
     void updateRid(ballTreeNode *node, std::ofstream &output);
-    
+
 	void TreeSearch(float *query, ballTreeNode *node, Mip &mip);
 	void buildNode(ballTreeNode *node);
 public:
@@ -54,7 +54,7 @@ public:
 
 //-----------------------ZJQ:20170521任务3与4实现-----------------------//
 	bool restoreTree(const char* index_path);
-	
+
 	int mipSearch(int d, float* query);
 
     void LinearSearch(float *query, ballTreeNode *node, Mip& mip);
@@ -76,10 +76,11 @@ public:
 	void updateSize();
 	void buildQuadBall(ballTreeNode *&node, ballTreeNode *father, int n, int d, float **data, bool dir1, bool dir2);
 	void QuadTreeSearch(float* query, ballTreeNode* node, Mip &mip);
+	bool MakeQuadBallTreeSplit(int n, int d, float **data, float *&A, float *&B, float *&C, float *&D);
 
-    int getNumIndexSlot() { return numIndexSlot; }
-    int getNumDataSlot() { return numDataSlot; }
-    int getIndexSlotSize() { return INDEX_SLOTSIZE; }
-    int getDataSlotSize() { return DATA_SLOTSIZE; }
+  int getNumIndexSlot() { return numIndexSlot; }
+  int getNumDataSlot() { return numDataSlot; }
+  int getIndexSlotSize() { return INDEX_SLOTSIZE; }
+  int getDataSlotSize() { return DATA_SLOTSIZE; }
 };
 #endif
